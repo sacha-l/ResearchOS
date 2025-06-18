@@ -1,0 +1,16 @@
+[package]
+name = "research-ai-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+candid = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+clap = { workspace = true }
+reqwest = { workspace = true }
+anyhow = { workspace = true }
+uuid = { workspace = true }
+ic-agent = "0.32"
+url = "2.4"
