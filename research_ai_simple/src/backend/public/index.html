@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResearchOS - Neural Network Interface</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono:wght@400&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Share Tech Mono', monospace; background: #0a0a0a; color: #00ff41; overflow-x: hidden; line-height: 1.4; }
+        .grid-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px); background-size: 20px 20px; z-index: -1; }
+        .terminal-window { background: rgba(0, 0, 0, 0.9); border: 1px solid #00ff41; margin: 15px; box-shadow: 0 0 20px rgba(0, 255, 65, 0.3); }
+        .terminal-header { background: linear-gradient(90deg, #001a00 0%, #003300 100%); color: #00ff41; padding: 8px 12px; font-size: 14px; font-weight: bold; border-bottom: 1px solid #00ff41; display: flex; justify-content: space-between; }
+        .terminal-content { padding: 20px; }
+        .ascii-header { text-align: center; color: #00ff41; font-size: 12px; margin-bottom: 20px; white-space: pre; text-shadow: 0 0 10px #00ff41; position: relative; }
+        .spark-line { position: absolute; bottom: -30px; left: 50%; transform: translateX(-50%); width: 600px; height: 20px; overflow: hidden; }
+        .spark { position: absolute; width: 2px; background: linear-gradient(to top, #00ff41, #ffffff); animation: spark 3s infinite linear; box-shadow: 0 0 8px #00ff41; }
+        @keyframes spark { 0% { left: 0%; height: 2px; opacity: 0; } 10% { opacity: 1; height: 15px; } 50% { height: 8px; } 90% { height: 12px; opacity: 1; } 100% { left: 100%; height: 1px; opacity: 0; } }
+        .spark:nth-child(1) { animation-delay: 0s; } .spark:nth-child(2) { animation-delay: 0.5s; } .spark:nth-child(3) { animation-delay: 1s; } .spark:nth-child(4) { animation-delay: 1.5s; } .spark:nth-child(5) { animation-delay: 2s; } .spark:nth-child(6) { animation-delay: 2.5s; }
+        .cyber-desktop { min-height: 100vh; padding: 20px; }
+        .neural-grid { display: grid; grid-template-columns: 1fr 400px; gap: 20px; height: calc(100vh - 100px); }
+        .research-interface { display: flex; flex-direction: column; gap: 20px; }
+        .query-input-container { display: flex; flex-direction: column; align-items: center; gap: 15px; margin: 20px 0; }
+        .neural-input { width: 100%; max-width: 500px; background: #2a2a2a; border: 2px inset #808080; color: #000000; padding: 12px 15px; font-family: inherit; font-size: 14px; text-align: center; outline: none; }
+        .neural-input::placeholder { color: #666666; font-style: italic; }
+        .neural-input:focus { border: 2px inset #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.3); }
+        .execute-btn { background: linear-gradient(45deg, #001a00, #003300); border: 2px solid #00ff41; color: #00ff41; padding: 15px 40px; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; font-family: inherit; display: block; margin: 0 auto; }
+        .execute-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .timer-matrix { text-align: center; padding: 20px; border: 1px solid #00ff41; background: radial-gradient(circle, rgba(0, 255, 65, 0.05) 0%, transparent 70%); }
+        .timer-display { font-size: 36px; font-weight: bold; color: #ff00ff; margin: 10px 0; text-shadow: 0 0 20px #ff00ff; }
+        .timer-label { font-size: 12px; color: #00cc33; text-transform: uppercase; }
+        .data-stream { background: #2a2a2a; border: 2px inset #808080; padding: 15px; height: 300px; overflow-y: auto; font-size: 13px; color: #000000; }
+        .data-content { white-space: pre-wrap; color: #000000; text-shadow: none; }
+        .loading-matrix { text-align: center; color: #666666; font-style: italic; padding: 40px; }
+        .console { background: #000000; color: #00ff41; font-size: 11px; padding: 15px; height: 280px; overflow-y: auto; border: 1px solid #00ff41; }
+        .console-line { margin-bottom: 3px; }
+        .console-success { color: #00ff41; } .console-info { color: #00ccff; } .console-error { color: #ff0040; } .console-warning { color: #ffff00; }
+        .source-matrix { border: 1px solid #00cc33; background: rgba(0, 0, 0, 0.9); padding: 15px; height: 200px; overflow-y: auto; }
+        .source-node { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0, 255, 65, 0.2); font-size: 12px; }
+        .source-handle { color: #00ffff; text-shadow: 0 0 5px #00ffff; } .source-influence { color: #00ff41; font-weight: bold; }
+        .neural-status { position: fixed; bottom: 0; left: 0; right: 0; height: 40px; background: rgba(0, 0, 0, 0.95); border-top: 1px solid #00ff41; display: flex; align-items: center; padding: 0 20px; font-size: 12px; }
+        .status-node { border: 1px solid #00cc33; padding: 5px 15px; margin-right: 10px; background: rgba(0, 255, 65, 0.05); text-transform: uppercase; }
+        .pulse-glow { animation: pulseGlow 2s infinite; }
+        @keyframes pulseGlow { 0%, 100% { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; } 50% { text-shadow: 0 0 2px #00ff41, 0 0 5px #00ff41; } }
+        @media (max-width: 1024px) { .neural-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="grid-bg"></div>
+    <div class="cyber-desktop">
+        <div class="ascii-header">
+██████╗ ███████╗███████╗███████╗ █████╗ ██████╗  ██████╗██╗  ██╗ ██████╗ ███████╗
+██╔══██╗██╔════╝██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝██║  ██║██╔═══██╗██╔════╝
+██████╔╝█████╗  ███████╗█████╗  ███████║██████╔╝██║     ███████║██║   ██║███████╗
+██╔══██╗██╔══╝  ╚════██║██╔══╝  ██╔══██║██╔══██╗██║     ██╔══██║██║   ██║╚════██║
+██║  ██║███████╗███████║███████╗██║  ██║██║  ██║╚██████╗██║  ██║╚██████╔╝███████║
+╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+            <div class="spark-line">
+                <div class="spark"></div><div class="spark"></div><div class="spark"></div>
+                <div class="spark"></div><div class="spark"></div><div class="spark"></div>
+            </div>
+        </div>
+        <div class="neural-grid">
+            <div class="research-interface">
+                <div class="terminal-window">
+                    <div class="terminal-header"><span>NEURAL RESEARCH INTERFACE v2.0.1</span><span>● LIVE</span></div>
+                    <div class="terminal-content">
+                        <div class="query-input-container">
+                            <input type="text" class="neural-input" id="queryInput" placeholder="Enter your neural query... (e.g., AI blockchain research)" maxlength="100">
+                            <button class="execute-btn" id="researchBtn">>>> EXECUTE NEURAL QUERY <<<</button>
+                        </div>
+                        <div class="timer-matrix">
+                            <div class="timer-label">NEURAL NETWORK</div>
+                            <div class="timer-display pulse-glow" id="timerDisplay">LIVE</div>
+                            <div class="timer-label">ICP AGENTS ACTIVE</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="terminal-window">
+                    <div class="terminal-header"><span>DATA_STREAM.BUFFER</span><span>◉ RECEIVING</span></div>
+                    <div class="terminal-content">
+                        <div class="data-stream" id="dataStream">
+                            <div class="loading-matrix">[AWAITING_NEURAL_INPUT]<br>ResearchOS Neural Network Online<br>Enter query to activate ICP canister...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="neural-monitor">
+                <div class="terminal-window">
+                    <div class="terminal-header"><span>NEURAL_ACTIVITY.LOG</span><span>◎ MONITORING</span></div>
+                    <div class="terminal-content">
+                        <div class="console" id="console">
+                            <div class="console-line"><span class="console-info">[INFO]</span> ResearchOS neural network initialized</div>
+                            <div class="console-line"><span class="console-success">[OK]</span> ICP canister integration ready</div>
+                            <div class="console-line"><span class="console-info">[INFO]</span> Awaiting neural queries...</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="terminal-window">
+                    <div class="terminal-header"><span>SOURCE_MATRIX.VERIFIED</span><span>◈ INDEXED</span></div>
+                    <div class="terminal-content">
+                        <div class="source-matrix" id="sourceMatrix">
+                            <div style="text-align: center; color: #666; padding: 30px;">[NEURAL_PATHWAYS_STANDBY]<br>Execute query to activate source nodes...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="neural-status">
+        <div class="status-node">SYSTEM_ONLINE</div>
+        <div class="status-node" id="connectionStatus">SERVER_READY</div>
+        <div class="status-node" id="agentStatus">AGENTS_STANDBY</div>
+        <div class="status-node" id="timeStatus">ICP_LIVE</div>
+    </div>
+    <script>
+        class ResearchOS {
+            constructor() {
+                this.isProcessing = false;
+                this.initEventListeners();
+                this.checkConnection();
+            }
+            async checkConnection() {
+                try {
+                    const response = await fetch('/api/health');
+                    const data = await response.json();
+                    this.addConsoleEntry('Backend connection established', 'success');
+                    this.addConsoleEntry(data.message, 'info');
+                } catch (error) {
+                    this.addConsoleEntry('Backend connection failed', 'error');
+                }
+            }
+            initEventListeners() {
+                const queryInput = document.getElementById('queryInput');
+                const researchBtn = document.getElementById('researchBtn');
+                researchBtn.addEventListener('click', () => this.executeQuery());
+                queryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.executeQuery();
+                });
+                queryInput.addEventListener('focus', () => {
+                    this.addConsoleEntry('Neural input interface activated', 'info');
+                });
+            }
+            async executeQuery() {
+                if (this.isProcessing) return;
+                const queryInput = document.getElementById('queryInput');
+                const userQuery = queryInput.value.trim();
+                if (!userQuery) {
+                    this.addConsoleEntry('Neural query cannot be empty', 'warning');
+                    queryInput.focus();
+                    return;
+                }
+                this.isProcessing = true;
+                const btn = document.getElementById('researchBtn');
+                btn.disabled = true;
+                btn.textContent = '>>> PROCESSING <<<';
+                btn.classList.add('pulse-glow');
+                document.getElementById('agentStatus').textContent = 'AGENTS_ACTIVE';
+                try {
+                    this.addConsoleEntry('Neural query: "' + userQuery + '"', 'info');
+                    this.addConsoleEntry('Connecting to ICP canister...', 'info');
+                    const response = await fetch('/api/neural-query', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ query: userQuery })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        this.addConsoleEntry('Data acquisition complete', 'success');
+                        this.displayResults(result.data);
+                        queryInput.value = '';
+                    } else {
+                        throw new Error(result.error);
+                    }
+                } catch (error) {
+                    this.addConsoleEntry('Query failed: ' + error.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = '>>> EXECUTE NEURAL QUERY <<<';
+                    btn.classList.remove('pulse-glow');
+                    this.isProcessing = false;
+                    document.getElementById('agentStatus').textContent = 'AGENTS_READY';
+                }
+            }
+            displayResults(data) {
+                const dataStream = document.getElementById('dataStream');
+                const formatted = this.formatContent(data.content);
+                dataStream.innerHTML = '<div class="data-content">' + formatted + '</div>';
+                const sourceMatrix = document.getElementById('sourceMatrix');
+                sourceMatrix.innerHTML = data.sources.map(source => 
+                    '<div class="source-node"><div><span class="source-handle">' + source.handle + '</span><div style="font-size: 10px; color: #666;">' + source.neural_id + '</div></div><span class="source-influence">' + source.influence + '%</span></div>'
+                ).join('');
+                data.logs.forEach(log => {
+                    this.addConsoleEntry(log.agent + ': ' + log.message, log.log_type);
+                });
+            }
+            formatContent(content) {
+                return content.split('\n').map((line, i) => {
+                    if (line.trim()) {
+                        const priority = i < 2 ? '[PRIORITY_ALPHA]' : '[PRIORITY_BETA]';
+                        return priority + ' ' + line.trim();
+                    }
+                    return line;
+                }).join('\n');
+            }
+            addConsoleEntry(text, type = 'info') {
+                const console = document.getElementById('console');
+                const line = document.createElement('div');
+                line.className = 'console-line';
+                const timestamp = new Date().toLocaleTimeString();
+                const prefixes = { success: '[OK]', error: '[ERR]', warning: '[WARN]', info: '[INFO]' };
+                const prefix = prefixes[type] || '[INFO]';
+                line.innerHTML = '<span class="console-' + type + '">' + prefix + '</span> [' + timestamp + '] ' + text;
+                console.appendChild(line);
+                console.scrollTop = console.scrollHeight;
+                const lines = console.querySelectorAll('.console-line');
+                if (lines.length > 50) lines[0].remove();
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            new ResearchOS();
+        });
+    </script>
+</body>
+</html>

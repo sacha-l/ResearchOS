@@ -1,9 +1,14 @@
 # ResearchOS
 
-Autonomous AI agents on ICP that coordinate to maintain fresh, up-to-date knowledge bases. Built to demonstrate how ICP's unique features enable decentralized research systems.
+Autonomous AI agents on ICP that coordinate to maintain fresh, up-to-date knowledge bases.
+
+![ResearchOS](./shot.png)
+
+Built to demonstrate how ICP's unique features enable decentralized research systems.
 
 ## What It Does
 
+ResearchOS is designed as a foundational platform for autonomous research coordination.
 ResearchOS runs a **news monitoring system** where AI agents work together to keep information current:
 
 - **Ask for news** on any topic → Get instant results from Groq AI

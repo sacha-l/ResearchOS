@@ -1,9 +1,10 @@
 {
+  "version": 1,
   "canisters": {
     "research_ai_simple_backend": {
-      "candid": "src/research_ai_simple_backend/research_ai_simple_backend.did",
+      "type": "rust",
       "package": "research_ai_simple_backend",
-      "type": "rust"
+      "candid": "src/research_ai_simple_backend/research_ai_simple_backend.did"
     }
   },
   "defaults": {
@@ -13,5 +14,10 @@
     }
   },
   "output_env_file": ".env",
-  "version": 1
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:4943",
+      "type": "ephemeral"
+    }
+  }
 }
