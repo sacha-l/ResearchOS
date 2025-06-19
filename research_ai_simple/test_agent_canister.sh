@@ -5,6 +5,7 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Function to print colored output
@@ -24,7 +25,117 @@ print_error() {
     echo -e "${RED}✗ $1${NC}"
 }
 
-# Function to wait with countdown
+# Function to check and install dfx
+check_and_install_dfx() {
+    print_step "Checking DFX Installation"
+    
+    if command -v dfx &> /dev/null; then
+        local dfx_version=$(dfx --version 2>/dev/null | head -n1)
+        print_success "DFX is already installed: $dfx_version"
+        return 0
+    fi
+    
+    print_info "DFX not found. Installing DFX locally..."
+    
+    # Check if we're on a supported platform
+    local os_type=$(uname -s)
+    local arch_type=$(uname -m)
+    
+    print_info "Detected OS: $os_type, Architecture: $arch_type"
+    
+    if [[ "$os_type" != "Linux" && "$os_type" != "Darwin" ]]; then
+        print_error "Unsupported operating system: $os_type"
+        print_info "Please install DFX manually from: https://sdk.dfinity.org/"
+        exit 1
+    fi
+    
+    # Create local bin directory if it doesn't exist
+    mkdir -p "$HOME/.local/bin"
+    
+    # Download and install DFX
+    print_info "Downloading DFX installer..."
+    if curl -fsSL https://sdk.dfinity.org/install.sh | sh; then
+        print_success "DFX installation completed!"
+        
+        # Add to PATH for this session
+        export PATH="$HOME/.local/share/dfx/bin:$PATH"
+        
+        # Check if installation was successful
+        if command -v dfx &> /dev/null; then
+            local dfx_version=$(dfx --version 2>/dev/null | head -n1)
+            print_success "DFX is now available: $dfx_version"
+            
+            # Inform user about PATH
+            echo -e "${YELLOW}"
+            echo "Note: DFX has been installed to ~/.local/share/dfx/bin/"
+            echo "To use DFX in future terminal sessions, add this to your shell profile:"
+            echo "  export PATH=\"\$HOME/.local/share/dfx/bin:\$PATH\""
+            echo -e "${NC}"
+        else
+            print_error "DFX installation failed - command not found after installation"
+            exit 1
+        fi
+    else
+        print_error "Failed to download or install DFX"
+        print_info "Please install DFX manually from: https://sdk.dfinity.org/"
+        exit 1
+    fi
+}
+
+# Function to check if dfx daemon is running
+check_dfx_daemon() {
+    print_step "Checking DFX Daemon"
+    
+    if dfx ping local &> /dev/null; then
+        print_success "DFX daemon is running"
+        return 0
+    fi
+    
+    print_info "DFX daemon not running. Starting local replica..."
+    
+    # Start dfx in background
+    dfx start --clean --background
+    
+    # Wait for it to be ready
+    local max_attempts=30
+    local attempt=1
+    
+    while [ $attempt -le $max_attempts ]; do
+        if dfx ping local &> /dev/null; then
+            print_success "DFX daemon started successfully"
+            return 0
+        fi
+        
+        echo -ne "\rWaiting for DFX daemon to start... ($attempt/$max_attempts)"
+        sleep 2
+        ((attempt++))
+    done
+    
+    echo # New line after waiting
+    print_error "Failed to start DFX daemon after $max_attempts attempts"
+    print_info "Try starting manually with: dfx start"
+    exit 1
+}
+
+# Function to check if canister is deployed
+check_canister_deployment() {
+    print_step "Checking Canister Deployment"
+    
+    if dfx canister id research_ai_simple_backend &> /dev/null; then
+        print_success "Canister 'research_ai_simple_backend' is deployed"
+        return 0
+    fi
+    
+    print_info "Canister not found. Attempting to deploy..."
+    
+    if dfx deploy research_ai_simple_backend; then
+        print_success "Canister deployed successfully"
+    else
+        print_error "Failed to deploy canister"
+        print_info "Make sure you're in the correct project directory and run 'dfx deploy' manually"
+        exit 1
+    fi
+}
 wait_with_countdown() {
     local seconds=$1
     local message=$2
@@ -59,6 +170,24 @@ echo "║                Agent Canister Test Script                    ║"
 echo "║          Testing shared memory and agent coordination        ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
+
+# Pre-flight checks
+print_step "Pre-flight Checks"
+
+# Check and install dfx if needed
+check_and_install_dfx
+
+wait_with_countdown 2 "Checking DFX daemon status..."
+
+# Check if dfx daemon is running
+check_dfx_daemon
+
+wait_with_countdown 2 "Verifying canister deployment..."
+
+# Check if canister is deployed
+check_canister_deployment
+
+wait_with_countdown 3 "All systems ready! Starting tests..."
 
 # Step 1: Health Check
 print_step "Step 1: Health Check"
