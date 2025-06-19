@@ -1,14 +1,30 @@
-type NewsQuery = record {
-    topic : text;
+type AgentData = record {
+    key : text;
+    value : text;
+    agent_id : text;
 };
 
-type NewsResponse = record {
-    topic : text;
-    latest_info : text;
-    timestamp : nat64;
+type HttpQueryRequest = record {
+    url : text;
+    agent_id : text;
+    store_key : text;
+};
+
+type GroqQueryRequest = record {
+    prompt : text;
+    agent_id : text;
+    store_key : text;
 };
 
 service : {
-    get_latest_news : (NewsQuery) -> (NewsResponse);
+    // Update calls (modify state)
+    agent_query_groq : (GroqQueryRequest) -> (text);
+    agent_query_http : (HttpQueryRequest) -> (text);
+    agent_store_data : (AgentData) -> (text);
+    clear_storage : () -> (text);
+    
+    // Query calls (read-only)
+    agent_get_data : (text) -> (opt text) query;
+    get_all_data : () -> (vec record { text; text }) query;
     health_check : () -> (text) query;
 }
