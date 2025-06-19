@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ResearchOS - Agent Console</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'MS Sans Serif', sans-serif;
+            background: #c0c0c0;
+            padding: 20px;
+            font-size: 11px;
+        }
+        
+        .window {
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+            margin-bottom: 10px;
+        }
+        
+        .title-bar {
+            background: linear-gradient(90deg, #0000ff 0%, #0080ff 100%);
+            color: white;
+            padding: 2px 4px;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .window-controls {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .control-btn {
+            width: 16px;
+            height: 14px;
+            background: #c0c0c0;
+            border: 1px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .control-btn:active {
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+        }
+        
+        .window-content {
+            padding: 8px;
+            background: #c0c0c0;
+        }
+        
+        .input-section {
+            margin-bottom: 10px;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .label {
+            font-weight: bold;
+            min-width: 60px;
+        }
+        
+        .text-input {
+            flex: 1;
+            padding: 2px 4px;
+            border: 2px solid;
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+            background: white;
+            font-family: 'MS Sans Serif', sans-serif;
+            font-size: 11px;
+        }
+        
+        .btn {
+            padding: 4px 12px;
+            background: #c0c0c0;
+            border: 2px solid;
+            border-color: #dfdfdf #808080 #808080 #dfdfdf;
+            font-family: 'MS Sans Serif', sans-serif;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .btn:active {
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+        }
+        
+        .console-window {
+            height: 200px;
+        }
+        
+        .console-content {
+            height: 176px;
+            background: black;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            padding: 4px;
+            overflow-y: auto;
+            border: 2px solid;
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+        }
+        
+        .log-entry {
+            margin-bottom: 2px;
+            white-space: pre-wrap;
+        }
+        
+        .log-timestamp {
+            color: #808080;
+        }
+        
+        .log-agent {
+            color: #ffff00;
+            font-weight: bold;
+        }
+        
+        .log-success {
+            color: #00ff00;
+        }
+        
+        .log-error {
+            color: #ff0000;
+        }
+        
+        .log-info {
+            color: #00ffff;
+        }
+        
+        .results-window {
+            height: 300px;
+        }
+        
+        .results-content {
+            height: 276px;
+            background: white;
+            padding: 8px;
+            overflow-y: auto;
+            border: 2px solid;
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+        }
+        
+        .result-item {
+            border: 1px solid #808080;
+            margin-bottom: 8px;
+            background: #ffffff;
+        }
+        
+        .result-header {
+            background: #c0c0c0;
+            padding: 4px 8px;
+            font-weight: bold;
+            border-bottom: 1px solid #808080;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .result-body {
+            padding: 8px;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        .confidence-bar {
+            background: #808080;
+            height: 4px;
+            width: 60px;
+            margin-top: 2px;
+        }
+        
+        .confidence-fill {
+            background: #00ff00;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .main-window {
+            grid-column: 1 / -1;
+        }
+        
+        .status-bar {
+            background: #c0c0c0;
+            border: 1px solid;
+            border-color: #808080 #dfdfdf #dfdfdf #808080;
+            padding: 2px 8px;
+            margin-top: 10px;
+            font-size: 11px;
+        }
+        
+        .blinking {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="window main-window">
+        <div class="title-bar">
+            <span>ResearchOS - AI Agent Console v1.0</span>
+            <div class="window-controls">
+                <div class="control-btn">_</div>
+                <div class="control-btn">□</div>
+                <div class="control-btn">×</div>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="input-section">
+                <div class="input-group">
+                    <span class="label">Query:</span>
+                    <input type="text" class="text-input" id="queryInput" value="Should I invest in renewable energy stocks?" placeholder="Enter research query...">
+                    <button class="btn" onclick="startResearch()">Execute</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="layout">
+        <div class="window console-window">
+            <div class="title-bar">
+                <span>Agent Activity Log</span>
+                <div class="window-controls">
+                    <div class="control-btn">_</div>
+                    <div class="control-btn">□</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="console-content" id="consoleLog">
+                    <div class="log-entry"><span class="log-timestamp">[12:34:56]</span> <span class="log-info">System initialized. Waiting for query...</span></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="window results-window">
+            <div class="title-bar">
+                <span>Research Results</span>
+                <div class="window-controls">
+                    <div class="control-btn">_</div>
+                    <div class="control-btn">□</div>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="results-content" id="resultsPanel">
+                    <div style="text-align: center; color: #808080; margin-top: 60px;">
+                        No results yet. Execute a query to begin research.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="status-bar" id="statusBar">
+        Ready | Agents: 0 active | Last query: none
+    </div>
+    
+    <script>
+        let logCount = 0;
+        let activeAgents = 0;
+        
+        function addLog(type, agent, message) {
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+            const console = document.getElementById('consoleLog');
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            let logClass = 'log-info';
+            if (type === 'success') logClass = 'log-success';
+            if (type === 'error') logClass = 'log-error';
+            
+            logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> <span class="log-agent">${agent}:</span> <span class="${logClass}">${message}</span>`;
+            
+            console.appendChild(logEntry);
+            console.scrollTop = console.scrollHeight;
+            logCount++;
+        }
+        
+        function addResult(title, content, confidence) {
+            const resultsPanel = document.getElementById('resultsPanel');
+            
+            // Clear placeholder text on first result
+            if (resultsPanel.children.length === 1 && resultsPanel.children[0].style.textAlign === 'center') {
+                resultsPanel.innerHTML = '';
+            }
+            
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item';
+            
+            const confidenceWidth = Math.round(confidence);
+            
+            resultItem.innerHTML = `
+                <div class="result-header">
+                    <span>${title}</span>
+                    <div>
+                        <div style="font-size: 9px; margin-bottom: 2px;">${confidence}% conf</div>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${confidenceWidth}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="result-body">${content}</div>
+            `;
+            
+            resultsPanel.appendChild(resultItem);
+        }
+        
+        function updateStatus(message) {
+            document.getElementById('statusBar').textContent = message;
+        }
+        
+        function startResearch() {
+            const query = document.getElementById('queryInput').value;
+            if (!query.trim()) return;
+            
+            // Clear previous results
+            document.getElementById('resultsPanel').innerHTML = '<div style="text-align: center; color: #808080; margin-top: 60px;">Processing query...</div>';
+            
+            addLog('info', 'SYSTEM', `Starting research: "${query}"`);
+            updateStatus('Processing | Agents: 0 active | Initializing...');
+            
+            // Simulate agent workflow
+            setTimeout(() => {
+                activeAgents = 1;
+                addLog('info', 'GROQ-001', 'Connecting to Groq API...');
+                updateStatus(`Processing | Agents: ${activeAgents} active | Querying AI...`);
+            }, 500);
+            
+            setTimeout(() => {
+                addLog('success', 'GROQ-001', 'Market analysis request sent');
+                addLog('info', 'GROQ-001', 'Waiting for API response...');
+            }, 1200);
+            
+            setTimeout(() => {
+                addLog('success', 'GROQ-001', 'Market data received (2.1KB)');
+                addLog('info', 'PARSER-01', 'Parsing JSON response...');
+                addResult('Market Outlook', 'Renewable energy stocks show strong fundamentals with 23% average growth over the past year. Solar and wind sectors leading with government policy support driving adoption rates.', 85);
+            }, 2800);
+            
+            setTimeout(() => {
+                activeAgents = 2;
+                addLog('success', 'PARSER-01', 'Market data parsed successfully');
+                addLog('info', 'GROQ-002', 'Initiating risk analysis query...');
+                updateStatus(`Processing | Agents: ${activeAgents} active | Risk analysis...`);
+            }, 3200);
+            
+            setTimeout(() => {
+                addLog('success', 'GROQ-002', 'Risk assessment data received');
+                addLog('info', 'VALIDATOR', 'Cross-referencing market data...');
+                addResult('Risk Assessment', 'Moderate risk profile due to policy dependency and market volatility. Diversification across clean energy subsectors recommended. ESG funds provide additional stability layer.', 78);
+            }, 4500);
+            
+            setTimeout(() => {
+                activeAgents = 3;
+                addLog('success', 'VALIDATOR', 'Data validation complete');
+                addLog('info', 'GROQ-003', 'Generating investment strategy...');
+                updateStatus(`Processing | Agents: ${activeAgents} active | Strategy gen...`);
+            }, 5000);
+            
+            setTimeout(() => {
+                addLog('success', 'GROQ-003', 'Strategy recommendations generated');
+                addLog('info', 'SYNTHESIS', 'Combining all research data...');
+                addResult('Investment Strategy', 'Dollar-cost averaging into established renewable ETFs (VanEck, iShares) recommended. Consider 10-15% portfolio allocation initially, with selective exposure to storage and smart grid technologies.', 82);
+            }, 6200);
+            
+            setTimeout(() => {
+                activeAgents = 0;
+                addLog('success', 'SYNTHESIS', 'Research synthesis complete');
+                addLog('info', 'SYSTEM', 'All agents completed successfully');
+                addResult('Bottom Line Recommendation', 'YES - Renewable energy represents a solid long-term investment opportunity. Start with diversified clean energy funds, gradually increase allocation based on risk tolerance. Current market conditions favorable for entry.', 88);
+                updateStatus(`Complete | Agents: 0 active | Last query: ${new Date().toLocaleTimeString()}`);
+            }, 7500);
+        }
+        
+        // Allow Enter key to trigger research
+        document.getElementById('queryInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startResearch();
+            }
+        });
+    </script>
+</body>
+</html>
