@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "research_ai_simple_backend": {
+      "candid": "src/research_ai_simple_backend/research_ai_simple_backend.did",
+      "package": "research_ai_simple_backend",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
