@@ -1,10 +1,10 @@
-# KnowledgeOS
+# ResearchOS
 
 A decentralized knowledge coordination system built on the Internet Computer Protocol (ICP) that demonstrates autonomous AI agents working together to maintain and update shared knowledge bases.
 
 ## Project Overview
 
-KnowledgeOS showcases how ICP's unique canister features enable persistent, autonomous knowledge systems. The current implementation demonstrates a news monitoring application where AI agents coordinate to keep information current without external infrastructure.
+ResearchOS showcases how ICP's unique canister features enable persistent, autonomous knowledge systems. The current implementation demonstrates a news monitoring application where AI agents coordinate to keep information current without external infrastructure.
 
 ### Key ICP Features Utilized
 
@@ -17,7 +17,7 @@ KnowledgeOS showcases how ICP's unique canister features enable persistent, auto
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Single KnowledgeOS Canister              │
+│                    Single ResearchOS Canister              │
 ├─────────────────────────────────────────────────────────────┤
 │  Agent 1: User-Triggered News Fetcher                      │
 │  ├─ Responds to user queries                               │
@@ -46,11 +46,11 @@ The current implementation demonstrates a news monitoring system where:
 4. **Agent 2** automatically updates** all monitored topics every 20 minutes
 5. **Users get fresh data** without waiting for API calls
 
-This showcases the core KnowledgeOS concept: AI agents that coordinate to maintain shared, up-to-date knowledge.
+This showcases the core ResearchOS concept: AI agents that coordinate to maintain shared, up-to-date knowledge.
 
 ## Future Roadmap
 
-KnowledgeOS is designed as a foundational platform for knowledge coordination. Future developments include:
+ResearchOS is designed as a foundational platform for knowledge coordination. Future developments include:
 
 - **Multi-AI Integration**: Source knowledge from OpenAI, Claude, Gemini, and other AI services
 - **Knowledge Synthesis**: Agents that cross-reference and validate information across sources
@@ -77,8 +77,8 @@ KnowledgeOS is designed as a foundational platform for knowledge coordination. F
 ### Setup
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/knowledgeos
-cd knowledgeos
+git clone https://github.com/yourusername/ResearchOS
+cd ResearchOS
 
 # Install dependencies
 npm install
@@ -129,4 +129,4 @@ Apache 2.0 - see LICENSE file for details.
 
 ---
 
-KnowledgeOS represents the future of decentralized knowledge systems - where AI agents coordinate autonomously to maintain fresh, reliable information without centralized infrastructure.
+ResearchOS represents the future of decentralized knowledge systems - where AI agents coordinate autonomously to maintain fresh, reliable information without centralized infrastructure.
