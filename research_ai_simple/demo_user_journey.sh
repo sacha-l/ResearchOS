@@ -98,10 +98,12 @@ check_project_structure() {
     if [ ! -f "dfx.json" ]; then
         print_error "dfx.json not found. Please run this script from your ResearchOS project root."
         print_info "Expected structure:"
-        echo "  researchos/"
+        echo "  research_ai_simple/"
         echo "  ├── dfx.json"
         echo "  ├── src/"
-        echo "  │   └── research_ai_simple_backend/"
+        echo "  │   └── backend/"
+        echo "  │       └── public/"
+        echo "  │           └── index.html"
         echo "  └── demo_user_journey.sh"
         exit 1
     fi
@@ -177,9 +179,176 @@ compile_and_deploy() {
     print_success "Canister deployed successfully"
     
     # Get and display canister ID
-    local canister_id=$(dfx canister id $CANISTER_NAME 2>/dev/null)
-    if [ ! -z "$canister_id" ]; then
-        print_success "Canister ID: $canister_id"
+    CANISTER_ID=$(dfx canister id $CANISTER_NAME 2>/dev/null)
+    if [ ! -z "$CANISTER_ID" ]; then
+        print_success "Canister ID: $CANISTER_ID"
+    fi
+}
+
+# Function to launch Express.js UI
+launch_ui() {
+    print_step "Launching ResearchOS Express.js UI"
+    
+    # Check if the Express app directory exists
+    EXPRESS_DIR="src/backend"
+    if [ ! -d "$EXPRESS_DIR" ]; then
+        print_error "Express backend directory not found: $EXPRESS_DIR"
+        return 1
+    fi
+    
+    # Check if index.html exists
+    UI_FILE="$EXPRESS_DIR/public/index.html"
+    if [ ! -f "$UI_FILE" ]; then
+        print_error "UI file not found: $UI_FILE"
+        print_info "Please ensure index.html is in src/backend/public/"
+        return 1
+    fi
+    
+    # Change to Express directory
+    cd "$EXPRESS_DIR"
+    
+    # Check if package.json exists
+    if [ ! -f "package.json" ]; then
+        print_error "package.json not found in $EXPRESS_DIR"
+        cd - > /dev/null
+        return 1
+    fi
+    
+    # Check if node_modules exists, if not install dependencies
+    if [ ! -d "node_modules" ]; then
+        print_info "Installing Express.js dependencies..."
+        if command -v npm &> /dev/null; then
+            npm install
+        else
+            print_error "npm not found. Please install Node.js and npm"
+            cd - > /dev/null
+            return 1
+        fi
+    fi
+    
+    # Export canister ID as environment variable
+    export CANISTER_ID="$CANISTER_ID"
+    export CANISTER_NETWORK="local"
+    
+    print_info "Starting Express.js server with Canister ID: $CANISTER_ID"
+    
+    # Create a temporary script that modifies the HTML with canister ID
+    cat > inject-canister.js << EOF
+const fs = require('fs');
+const path = require('path');
+
+// Read the original HTML
+const htmlPath = path.join(__dirname, 'public', 'index.html');
+const originalHtml = fs.readFileSync(htmlPath, 'utf8');
+
+// Inject canister ID configuration
+const injectionScript = \`
+<script>
+    // Auto-configure canister ID from deployment
+    window.DEPLOYED_CANISTER_ID = '$CANISTER_ID';
+    window.CANISTER_NETWORK = 'local';
+    
+    window.addEventListener('DOMContentLoaded', () => {
+        const canisterInput = document.getElementById('canisterId');
+        const networkSelect = document.getElementById('networkSelect');
+        
+        // If elements exist and are empty, auto-fill them
+        if (canisterInput && !canisterInput.value) {
+            canisterInput.value = window.DEPLOYED_CANISTER_ID;
+            if (networkSelect) {
+                networkSelect.value = window.CANISTER_NETWORK;
+            }
+            // Trigger change event to auto-connect
+            canisterInput.dispatchEvent(new Event('change'));
+            
+            // Add console message
+            console.log('Auto-configured with Canister ID:', window.DEPLOYED_CANISTER_ID);
+        }
+    });
+</script>
+\`;
+
+// Inject before closing body tag
+const modifiedHtml = originalHtml.replace('</body>', injectionScript + '</body>');
+
+// Write to a temporary file
+fs.writeFileSync(path.join(__dirname, 'public', 'index-configured.html'), modifiedHtml);
+
+console.log('Canister ID injected into UI');
+EOF
+    
+    # Run the injection script
+    node inject-canister.js
+    
+    # Check if there's a custom start script in package.json
+    if grep -q '"start"' package.json; then
+        print_info "Starting Express server using npm start..."
+        
+        # Start the Express server with environment variables
+        CANISTER_ID="$CANISTER_ID" npm start &
+        SERVER_PID=$!
+    else
+        # Fallback to node command
+        print_info "Starting Express server..."
+        
+        # Look for common Express entry points
+        if [ -f "index.js" ]; then
+            CANISTER_ID="$CANISTER_ID" node index.js &
+            SERVER_PID=$!
+        elif [ -f "app.js" ]; then
+            CANISTER_ID="$CANISTER_ID" node app.js &
+            SERVER_PID=$!
+        elif [ -f "server.js" ]; then
+            CANISTER_ID="$CANISTER_ID" node server.js &
+            SERVER_PID=$!
+        else
+            print_error "Could not find Express entry point (index.js, app.js, or server.js)"
+            cd - > /dev/null
+            return 1
+        fi
+    fi
+    
+    # Change back to original directory
+    cd - > /dev/null
+    
+    # Wait for server to start
+    sleep 3
+    
+    # Default Express port
+    PORT=${EXPRESS_PORT:-3000}
+    UI_URL="http://localhost:$PORT"
+    
+    print_success "Express server started with PID: $SERVER_PID"
+    print_info "UI available at: $UI_URL"
+    print_success "Canister ID automatically configured: $CANISTER_ID"
+    
+    # Try to open in default browser
+    if command -v open &> /dev/null; then
+        # macOS
+        open "$UI_URL"
+    elif command -v xdg-open &> /dev/null; then
+        # Linux
+        xdg-open "$UI_URL"
+    elif command -v start &> /dev/null; then
+        # Windows
+        start "$UI_URL"
+    else
+        print_info "Please open your browser and navigate to:"
+        echo -e "${YELLOW}$UI_URL${NC}"
+    fi
+    
+    # Store server PID for cleanup
+    echo $SERVER_PID > .ui_server.pid
+    
+    # Add cleanup instructions
+    echo
+    print_info "To stop the UI server later, run:"
+    echo -e "${YELLOW}kill $SERVER_PID${NC}"
+    echo -e "or: ${YELLOW}kill \$(cat .ui_server.pid)${NC}"
+    
+    # Also update the Express app if it has an API endpoint for canister config
+    if [ -f "$EXPRESS_DIR/index.js" ] || [ -f "$EXPRESS_DIR/app.js" ] || [ -f "$EXPRESS_DIR/server.js" ]; then
+        print_info "Express server can access canister ID via process.env.CANISTER_ID"
     fi
 }
 
@@ -352,6 +521,12 @@ echo -e "  ${GREEN}→${NC} Multi-source data aggregation"
 echo -e "  ${GREEN}→${NC} AI-powered blockchain applications"
 echo -e "  ${GREEN}→${NC} Decentralized knowledge management"
 echo
+
+# Launch UI
+wait_with_demo 3 "Launching ResearchOS Neural Interface..."
+launch_ui
+
+echo
 echo -e "${CYAN}Next Steps:${NC}"
 echo -e "  ${YELLOW}→${NC} Deploy to mainnet: dfx deploy --network ic"
 echo -e "  ${YELLOW}→${NC} Add more specialized agents"
@@ -368,3 +543,5 @@ echo -e "${BLUE}Fetch HTTP: ${NC}dfx canister call $CANISTER_NAME agent_query_ht
 echo -e "${BLUE}Query Groq: ${NC}dfx canister call $CANISTER_NAME agent_query_groq '(record { prompt = \"your question\"; agent_id = \"agent3\"; store_key = \"ai_result\" })'"
 echo -e "${BLUE}Get data: ${NC}dfx canister call $CANISTER_NAME agent_get_data '(\"key_name\")'"
 echo -e "${BLUE}View all: ${NC}dfx canister call $CANISTER_NAME get_all_data"
+echo
+echo -e "${GREEN}ResearchOS UI launched with Canister ID: ${CANISTER_ID}${NC}"

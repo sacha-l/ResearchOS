@@ -24,8 +24,11 @@
         .neural-input { width: 100%; max-width: 500px; background: #2a2a2a; border: 2px inset #808080; color: #000000; padding: 12px 15px; font-family: inherit; font-size: 14px; text-align: center; outline: none; }
         .neural-input::placeholder { color: #666666; font-style: italic; }
         .neural-input:focus { border: 2px inset #00ff41; box-shadow: 0 0 10px rgba(0, 255, 65, 0.3); }
-        .execute-btn { background: linear-gradient(45deg, #001a00, #003300); border: 2px solid #00ff41; color: #00ff41; padding: 15px 40px; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; font-family: inherit; display: block; margin: 0 auto; }
+        .execute-btn { background: linear-gradient(45deg, #001a00, #003300); border: 2px solid #00ff41; color: #00ff41; padding: 15px 40px; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; font-family: inherit; display: block; margin: 10px auto; }
         .execute-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .agent-buttons { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 10px; }
+        .agent-btn { background: #001a00; border: 1px solid #00ff41; color: #00ff41; padding: 8px 15px; font-size: 12px; cursor: pointer; font-family: inherit; }
+        .agent-btn:hover { background: #003300; }
         .timer-matrix { text-align: center; padding: 20px; border: 1px solid #00ff41; background: radial-gradient(circle, rgba(0, 255, 65, 0.05) 0%, transparent 70%); }
         .timer-display { font-size: 36px; font-weight: bold; color: #ff00ff; margin: 10px 0; text-shadow: 0 0 20px #ff00ff; }
         .timer-label { font-size: 12px; color: #00cc33; text-transform: uppercase; }
@@ -42,6 +45,9 @@
         .status-node { border: 1px solid #00cc33; padding: 5px 15px; margin-right: 10px; background: rgba(0, 255, 65, 0.05); text-transform: uppercase; }
         .pulse-glow { animation: pulseGlow 2s infinite; }
         @keyframes pulseGlow { 0%, 100% { text-shadow: 0 0 5px #00ff41, 0 0 10px #00ff41; } 50% { text-shadow: 0 0 2px #00ff41, 0 0 5px #00ff41; } }
+        .canister-config { margin-bottom: 20px; }
+        .config-input { width: 100%; max-width: 300px; background: #1a1a1a; border: 1px solid #00ff41; color: #00ff41; padding: 8px; font-family: inherit; font-size: 12px; margin: 5px 0; }
+        .config-label { font-size: 11px; color: #00cc33; text-transform: uppercase; }
         @media (max-width: 1024px) { .neural-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -63,16 +69,35 @@
         <div class="neural-grid">
             <div class="research-interface">
                 <div class="terminal-window">
+                    <div class="terminal-header"><span>ICP CANISTER CONFIGURATION</span><span>● CONFIG</span></div>
+                    <div class="terminal-content">
+                        <div class="canister-config">
+                            <div class="config-label">Canister ID (Backend)</div>
+                            <input type="text" class="config-input" id="canisterId" placeholder="e.g., ryjl3-tyaaa-aaaaa-aaaba-cai" value="">
+                            <div class="config-label">Network</div>
+                            <select class="config-input" id="networkSelect">
+                                <option value="local">Local (http://localhost:4943)</option>
+                                <option value="ic">Internet Computer (Mainnet)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="terminal-window">
                     <div class="terminal-header"><span>NEURAL RESEARCH INTERFACE v2.0.1</span><span>● LIVE</span></div>
                     <div class="terminal-content">
                         <div class="query-input-container">
                             <input type="text" class="neural-input" id="queryInput" placeholder="Enter your neural query... (e.g., AI blockchain research)" maxlength="100">
                             <button class="execute-btn" id="researchBtn">>>> EXECUTE NEURAL QUERY <<<</button>
+                            <div class="agent-buttons">
+                                <button class="agent-btn" onclick="researchOS.testStorage()">Test Storage Agent</button>
+                                <button class="agent-btn" onclick="researchOS.viewAllData()">View All Data</button>
+                                <button class="agent-btn" onclick="researchOS.clearStorage()">Clear Storage</button>
+                            </div>
                         </div>
                         <div class="timer-matrix">
                             <div class="timer-label">NEURAL NETWORK</div>
-                            <div class="timer-display pulse-glow" id="timerDisplay">LIVE</div>
-                            <div class="timer-label">ICP AGENTS ACTIVE</div>
+                            <div class="timer-display pulse-glow" id="timerDisplay">OFFLINE</div>
+                            <div class="timer-label">ICP MULTI-AGENT SYSTEM</div>
                         </div>
                     </div>
                 </div>
@@ -80,7 +105,7 @@
                     <div class="terminal-header"><span>DATA_STREAM.BUFFER</span><span>◉ RECEIVING</span></div>
                     <div class="terminal-content">
                         <div class="data-stream" id="dataStream">
-                            <div class="loading-matrix">[AWAITING_NEURAL_INPUT]<br>ResearchOS Neural Network Online<br>Enter query to activate ICP canister...</div>
+                            <div class="loading-matrix">[AWAITING_CANISTER_CONNECTION]<br>Configure canister ID above<br>Enter query to activate ICP agents...</div>
                         </div>
                     </div>
                 </div>
@@ -90,17 +115,17 @@
                     <div class="terminal-header"><span>NEURAL_ACTIVITY.LOG</span><span>◎ MONITORING</span></div>
                     <div class="terminal-content">
                         <div class="console" id="console">
-                            <div class="console-line"><span class="console-info">[INFO]</span> ResearchOS neural network initialized</div>
-                            <div class="console-line"><span class="console-success">[OK]</span> ICP canister integration ready</div>
-                            <div class="console-line"><span class="console-info">[INFO]</span> Awaiting neural queries...</div>
+                            <div class="console-line"><span class="console-info">[INFO]</span> ResearchOS multi-agent system initialized</div>
+                            <div class="console-line"><span class="console-warning">[WARN]</span> Awaiting ICP canister configuration</div>
+                            <div class="console-line"><span class="console-info">[INFO]</span> Agents ready: Storage, HTTP Query, Groq AI</div>
                         </div>
                     </div>
                 </div>
                 <div class="terminal-window">
-                    <div class="terminal-header"><span>SOURCE_MATRIX.VERIFIED</span><span>◈ INDEXED</span></div>
+                    <div class="terminal-header"><span>AGENT_STATUS.MATRIX</span><span>◈ INDEXED</span></div>
                     <div class="terminal-content">
                         <div class="source-matrix" id="sourceMatrix">
-                            <div style="text-align: center; color: #666; padding: 30px;">[NEURAL_PATHWAYS_STANDBY]<br>Execute query to activate source nodes...</div>
+                            <div style="text-align: center; color: #666; padding: 30px;">[AGENT_NETWORK_STANDBY]<br>Execute query to activate agent swarm...</div>
                         </div>
                     </div>
                 </div>
@@ -109,71 +134,178 @@
     </div>
     <div class="neural-status">
         <div class="status-node">SYSTEM_ONLINE</div>
-        <div class="status-node" id="connectionStatus">SERVER_READY</div>
+        <div class="status-node" id="connectionStatus">CANISTER_DISCONNECTED</div>
         <div class="status-node" id="agentStatus">AGENTS_STANDBY</div>
-        <div class="status-node" id="timeStatus">ICP_LIVE</div>
+        <div class="status-node" id="timeStatus">ICP_WAITING</div>
     </div>
-    <script>
+
+    <!-- Agent-JS SDK -->
+    <script type="module">
+        import { Actor, HttpAgent } from 'https://esm.sh/@dfinity/agent@0.20.2';
+        import { Principal } from 'https://esm.sh/@dfinity/principal@0.20.2';
+
+        // IDL Factory for your multi-agent canister
+        const idlFactory = ({ IDL }) => {
+            // Define types
+            const AgentData = IDL.Record({
+                'key': IDL.Text,
+                'value': IDL.Text,
+                'agent_id': IDL.Text,
+            });
+            
+            const HttpQueryRequest = IDL.Record({
+                'url': IDL.Text,
+                'agent_id': IDL.Text,
+                'store_key': IDL.Text,
+            });
+            
+            const GroqQueryRequest = IDL.Record({
+                'prompt': IDL.Text,
+                'agent_id': IDL.Text,
+                'store_key': IDL.Text,
+            });
+            
+            return IDL.Service({
+                // Update calls
+                'agent_query_groq': IDL.Func([GroqQueryRequest], [IDL.Text], []),
+                'agent_query_http': IDL.Func([HttpQueryRequest], [IDL.Text], []),
+                'agent_store_data': IDL.Func([AgentData], [IDL.Text], []),
+                'clear_storage': IDL.Func([], [IDL.Text], []),
+                
+                // Query calls
+                'agent_get_data': IDL.Func([IDL.Text], [IDL.Opt(IDL.Text)], ['query']),
+                'get_all_data': IDL.Func([], [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Text))], ['query']),
+                'health_check': IDL.Func([], [IDL.Text], ['query']),
+            });
+        };
+
         class ResearchOS {
             constructor() {
                 this.isProcessing = false;
+                this.agent = null;
+                this.actor = null;
                 this.initEventListeners();
-                this.checkConnection();
+                this.loadStoredConfig();
             }
-            async checkConnection() {
-                try {
-                    const response = await fetch('/api/health');
-                    const data = await response.json();
-                    this.addConsoleEntry('Backend connection established', 'success');
-                    this.addConsoleEntry(data.message, 'info');
-                } catch (error) {
-                    this.addConsoleEntry('Backend connection failed', 'error');
+
+            loadStoredConfig() {
+                const storedCanisterId = localStorage.getItem('canisterId');
+                const storedNetwork = localStorage.getItem('network');
+                if (storedCanisterId) {
+                    document.getElementById('canisterId').value = storedCanisterId;
+                }
+                if (storedNetwork) {
+                    document.getElementById('networkSelect').value = storedNetwork;
                 }
             }
+
+            async initializeAgent() {
+                const canisterId = document.getElementById('canisterId').value.trim();
+                const network = document.getElementById('networkSelect').value;
+                
+                if (!canisterId) {
+                    this.addConsoleEntry('Please enter a canister ID', 'warning');
+                    return false;
+                }
+
+                try {
+                    this.addConsoleEntry('Initializing ICP agent...', 'info');
+                    
+                    const host = network === 'local' 
+                        ? 'http://localhost:4943' 
+                        : 'https://icp-api.io';
+                    
+                    this.agent = new HttpAgent({ host });
+                    
+                    // Only fetch root key for local development
+                    if (network === 'local') {
+                        await this.agent.fetchRootKey();
+                    }
+                    
+                    this.actor = Actor.createActor(idlFactory, {
+                        agent: this.agent,
+                        canisterId: Principal.fromText(canisterId),
+                    });
+                    
+                    // Store config
+                    localStorage.setItem('canisterId', canisterId);
+                    localStorage.setItem('network', network);
+                    
+                    // Test connection
+                    const status = await this.actor.health_check();
+                    this.addConsoleEntry('Connected to canister: ' + canisterId, 'success');
+                    this.addConsoleEntry('Health check: ' + status, 'info');
+                    
+                    document.getElementById('connectionStatus').textContent = 'CANISTER_CONNECTED';
+                    document.getElementById('timerDisplay').textContent = 'ONLINE';
+                    document.getElementById('timeStatus').textContent = 'ICP_LIVE';
+                    
+                    return true;
+                } catch (error) {
+                    this.addConsoleEntry('Failed to connect: ' + error.message, 'error');
+                    document.getElementById('connectionStatus').textContent = 'CONNECTION_FAILED';
+                    return false;
+                }
+            }
+
             initEventListeners() {
                 const queryInput = document.getElementById('queryInput');
                 const researchBtn = document.getElementById('researchBtn');
+                const canisterIdInput = document.getElementById('canisterId');
+                const networkSelect = document.getElementById('networkSelect');
+                
                 researchBtn.addEventListener('click', () => this.executeQuery());
                 queryInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.executeQuery();
                 });
+                
+                // Auto-connect when canister ID is entered
+                canisterIdInput.addEventListener('change', () => this.initializeAgent());
+                networkSelect.addEventListener('change', () => {
+                    if (canisterIdInput.value) this.initializeAgent();
+                });
+                
                 queryInput.addEventListener('focus', () => {
                     this.addConsoleEntry('Neural input interface activated', 'info');
                 });
             }
+
             async executeQuery() {
                 if (this.isProcessing) return;
+                
+                if (!this.actor) {
+                    const connected = await this.initializeAgent();
+                    if (!connected) return;
+                }
+                
                 const queryInput = document.getElementById('queryInput');
                 const userQuery = queryInput.value.trim();
+                
                 if (!userQuery) {
                     this.addConsoleEntry('Neural query cannot be empty', 'warning');
                     queryInput.focus();
                     return;
                 }
+                
                 this.isProcessing = true;
                 const btn = document.getElementById('researchBtn');
                 btn.disabled = true;
                 btn.textContent = '>>> PROCESSING <<<';
                 btn.classList.add('pulse-glow');
                 document.getElementById('agentStatus').textContent = 'AGENTS_ACTIVE';
+                
                 try {
                     this.addConsoleEntry('Neural query: "' + userQuery + '"', 'info');
-                    this.addConsoleEntry('Connecting to ICP canister...', 'info');
-                    const response = await fetch('/api/neural-query', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ query: userQuery })
-                    });
-                    const result = await response.json();
-                    if (result.success) {
-                        this.addConsoleEntry('Data acquisition complete', 'success');
-                        this.displayResults(result.data);
-                        queryInput.value = '';
-                    } else {
-                        throw new Error(result.error);
-                    }
+                    this.addConsoleEntry('Activating multi-agent system...', 'info');
+                    
+                    // Execute multi-agent workflow
+                    await this.runMultiAgentResearch(userQuery);
+                    
+                    queryInput.value = '';
+                    
                 } catch (error) {
                     this.addConsoleEntry('Query failed: ' + error.message, 'error');
+                    this.displayError(error.message);
                 } finally {
                     btn.disabled = false;
                     btn.textContent = '>>> EXECUTE NEURAL QUERY <<<';
@@ -182,43 +314,296 @@
                     document.getElementById('agentStatus').textContent = 'AGENTS_READY';
                 }
             }
-            displayResults(data) {
-                const dataStream = document.getElementById('dataStream');
-                const formatted = this.formatContent(data.content);
-                dataStream.innerHTML = '<div class="data-content">' + formatted + '</div>';
-                const sourceMatrix = document.getElementById('sourceMatrix');
-                sourceMatrix.innerHTML = data.sources.map(source => 
-                    '<div class="source-node"><div><span class="source-handle">' + source.handle + '</span><div style="font-size: 10px; color: #666;">' + source.neural_id + '</div></div><span class="source-influence">' + source.influence + '%</span></div>'
-                ).join('');
-                data.logs.forEach(log => {
-                    this.addConsoleEntry(log.agent + ': ' + log.message, log.log_type);
-                });
+
+            async runMultiAgentResearch(query) {
+                const timestamp = Date.now();
+                const queryLower = query.toLowerCase();
+                
+                // Determine query type
+                const isNewsQuery = queryLower.includes('news') || 
+                                  queryLower.includes('latest') || 
+                                  queryLower.includes('trending') ||
+                                  queryLower.includes('headlines') ||
+                                  queryLower.includes('current events');
+                
+                // Agent 1: Store initial query
+                this.addConsoleEntry('[STORAGE-AGENT] Storing query metadata...', 'info');
+                const storeData = {
+                    key: `query_${timestamp}`,
+                    value: query,
+                    agent_id: 'storage-agent-1'
+                };
+                
+                const storeResponse = await this.actor.agent_store_data(storeData);
+                this.addConsoleEntry('[STORAGE-AGENT] ' + storeResponse, 'success');
+                
+                // Agent 2: Query Groq AI with enhanced prompt for news
+                this.addConsoleEntry('[GROQ-AI-AGENT] Processing research query...', 'info');
+                
+                let enhancedPrompt = query;
+                if (isNewsQuery) {
+                    // Enhance the prompt for better news results
+                    enhancedPrompt = `Please provide a comprehensive summary of the latest news, trends, and headlines about: ${query}. 
+                    Include:
+                    1. Major recent events and developments
+                    2. Key headlines and trending topics
+                    3. Important context and background
+                    4. Notable statistics or facts if relevant
+                    
+                    Format the response with clear sections and bullet points for easy reading.`;
+                    
+                    this.addConsoleEntry('[GROQ-AI-AGENT] Detected news query - using enhanced prompt', 'info');
+                }
+                
+                const groqRequest = {
+                    prompt: enhancedPrompt,
+                    agent_id: 'groq-news-agent',
+                    store_key: `groq_result_${timestamp}`
+                };
+                
+                try {
+                    const groqResponse = await this.actor.agent_query_groq(groqRequest);
+                    this.addConsoleEntry('[GROQ-AI-AGENT] ' + groqResponse, 'success');
+                    
+                    // If it's a news query, also try to fetch from a news API
+                    if (isNewsQuery && queryLower.includes('lagos')) {
+                        this.addConsoleEntry('[HTTP-AGENT] Attempting to fetch additional news data...', 'info');
+                        
+                        // Note: You might want to use a real news API here
+                        // For now, we'll store a note about this
+                        const newsNote = {
+                            key: `news_note_${timestamp}`,
+                            value: 'Note: For real-time news, consider integrating with news APIs like NewsAPI, Guardian API, or local Nigerian news sources.',
+                            agent_id: 'http-agent-advisor'
+                        };
+                        
+                        await this.actor.agent_store_data(newsNote);
+                        this.addConsoleEntry('[HTTP-AGENT] Stored advisory note for news API integration', 'info');
+                    }
+                    
+                } catch (error) {
+                    this.addConsoleEntry('[GROQ-AI-AGENT] Error: ' + error.message, 'error');
+                    
+                    // Fallback: Try a simpler query
+                    const fallbackRequest = {
+                        prompt: `Tell me about: ${query}`,
+                        agent_id: 'groq-fallback-agent',
+                        store_key: `groq_fallback_${timestamp}`
+                    };
+                    
+                    try {
+                        await this.actor.agent_query_groq(fallbackRequest);
+                        this.addConsoleEntry('[GROQ-AI-AGENT] Used fallback query', 'warning');
+                    } catch (fallbackError) {
+                        this.addConsoleEntry('[GROQ-AI-AGENT] Fallback also failed: ' + fallbackError.message, 'error');
+                    }
+                }
+                
+                // Store query type for analytics
+                const queryTypeData = {
+                    key: `query_type_${timestamp}`,
+                    value: isNewsQuery ? 'news_query' : 'general_query',
+                    agent_id: 'analytics-agent'
+                };
+                await this.actor.agent_store_data(queryTypeData);
+                
+                // Retrieve and display all results
+                await this.displayAgentResults(timestamp);
             }
+
+            async displayAgentResults(timestamp) {
+                // Get all stored data
+                const allData = await this.actor.get_all_data();
+                
+                const dataStream = document.getElementById('dataStream');
+                let content = '[MULTI-AGENT RESEARCH RESULTS]\n\n';
+                
+                // Find relevant results
+                let groqContent = '';
+                let hasNewsContent = false;
+                
+                for (const [key, value] of allData) {
+                    if (key.includes(timestamp.toString())) {
+                        if (key.includes('groq_result')) {
+                            // Parse Groq AI response
+                            try {
+                                const parsed = JSON.parse(value);
+                                if (parsed.choices && parsed.choices[0] && parsed.choices[0].message) {
+                                    groqContent = parsed.choices[0].message.content;
+                                    hasNewsContent = true;
+                                    
+                                    // Format the AI response nicely
+                                    content += '[AI RESEARCH SUMMARY]\n';
+                                    content += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+                                    content += groqContent + '\n\n';
+                                }
+                            } catch (e) {
+                                // If parsing fails, check if it's an error message
+                                if (value.includes('error') || value.includes('failed')) {
+                                    content += '[ERROR RESPONSE]\n' + value + '\n\n';
+                                } else {
+                                    content += '[RAW RESPONSE]\n' + value + '\n\n';
+                                }
+                            }
+                        } else if (key.includes('query_type')) {
+                            content += '[QUERY ANALYSIS] Type: ' + value + '\n';
+                        } else if (key.includes('news_note')) {
+                            content += '\n[RECOMMENDATION]\n' + value + '\n\n';
+                        } else if (!key.includes('query_')) {
+                            // Other stored data
+                            content += `\n[${key.toUpperCase()}]:\n${value}\n`;
+                        }
+                    }
+                }
+                
+                if (!hasNewsContent) {
+                    content += '\n[NO AI RESPONSE RECEIVED]\n';
+                    content += 'The Groq AI agent may be experiencing issues or rate limiting.\n';
+                    content += 'Please try again in a moment.\n';
+                }
+                
+                // Add timestamp
+                content += '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+                content += `[QUERY TIMESTAMP] ${new Date(timestamp).toLocaleString()}\n`;
+                
+                dataStream.innerHTML = '<div class="data-content">' + this.formatContent(content) + '</div>';
+                
+                // Update agent status matrix
+                this.updateAgentStatus(allData.length);
+            }
+
+            updateAgentStatus(dataCount) {
+                const sourceMatrix = document.getElementById('sourceMatrix');
+                sourceMatrix.innerHTML = `
+                    <div class="source-node">
+                        <div>
+                            <span class="source-handle">Groq AI Agent</span>
+                            <div style="font-size: 10px; color: #666;">LLaMA 3 Neural Network</div>
+                        </div>
+                        <span class="source-influence">Active</span>
+                    </div>
+                    <div class="source-node">
+                        <div>
+                            <span class="source-handle">Storage Agent</span>
+                            <div style="font-size: 10px; color: #666;">${dataCount} items in memory</div>
+                        </div>
+                        <span class="source-influence">Active</span>
+                    </div>
+                    <div class="source-node">
+                        <div>
+                            <span class="source-handle">HTTP Query Agent</span>
+                            <div style="font-size: 10px; color: #666;">External API Interface</div>
+                        </div>
+                        <span class="source-influence">Ready</span>
+                    </div>
+                `;
+            }
+
+            async testStorage() {
+                if (!this.actor) {
+                    await this.initializeAgent();
+                    if (!this.actor) return;
+                }
+                
+                const testData = {
+                    key: 'test_' + Date.now(),
+                    value: 'Test data from ResearchOS UI',
+                    agent_id: 'ui-test'
+                };
+                
+                try {
+                    const result = await this.actor.agent_store_data(testData);
+                    this.addConsoleEntry(result, 'success');
+                } catch (error) {
+                    this.addConsoleEntry('Storage test failed: ' + error.message, 'error');
+                }
+            }
+
+            async viewAllData() {
+                if (!this.actor) {
+                    await this.initializeAgent();
+                    if (!this.actor) return;
+                }
+                
+                try {
+                    const allData = await this.actor.get_all_data();
+                    const dataStream = document.getElementById('dataStream');
+                    
+                    if (allData.length === 0) {
+                        dataStream.innerHTML = '<div class="data-content">[STORAGE EMPTY]\n\nNo data stored in canister memory.</div>';
+                    } else {
+                        let content = '[CANISTER STORAGE CONTENTS]\n\n';
+                        for (const [key, value] of allData) {
+                            content += `KEY: ${key}\nVALUE: ${value}\n\n`;
+                        }
+                        dataStream.innerHTML = '<div class="data-content">' + content + '</div>';
+                    }
+                    
+                    this.addConsoleEntry(`Retrieved ${allData.length} items from storage`, 'info');
+                } catch (error) {
+                    this.addConsoleEntry('Failed to retrieve data: ' + error.message, 'error');
+                }
+            }
+
+            async clearStorage() {
+                if (!this.actor) {
+                    await this.initializeAgent();
+                    if (!this.actor) return;
+                }
+                
+                if (confirm('Are you sure you want to clear all stored data?')) {
+                    try {
+                        const result = await this.actor.clear_storage();
+                        this.addConsoleEntry(result, 'success');
+                        await this.viewAllData();
+                    } catch (error) {
+                        this.addConsoleEntry('Failed to clear storage: ' + error.message, 'error');
+                    }
+                }
+            }
+
+            displayError(errorMessage) {
+                const dataStream = document.getElementById('dataStream');
+                dataStream.innerHTML = '<div class="data-content" style="color: #ff0040;">[ERROR]\n\n' + errorMessage + '</div>';
+            }
+
             formatContent(content) {
                 return content.split('\n').map((line, i) => {
-                    if (line.trim()) {
-                        const priority = i < 2 ? '[PRIORITY_ALPHA]' : '[PRIORITY_BETA]';
+                    if (line.trim() && line.startsWith('[')) {
+                        return line;
+                    } else if (line.trim()) {
+                        const priority = i < 5 ? '[PRIORITY_ALPHA]' : '[PRIORITY_BETA]';
                         return priority + ' ' + line.trim();
                     }
                     return line;
                 }).join('\n');
             }
+
             addConsoleEntry(text, type = 'info') {
                 const console = document.getElementById('console');
                 const line = document.createElement('div');
                 line.className = 'console-line';
                 const timestamp = new Date().toLocaleTimeString();
-                const prefixes = { success: '[OK]', error: '[ERR]', warning: '[WARN]', info: '[INFO]' };
+                const prefixes = { 
+                    success: '[OK]', 
+                    error: '[ERR]', 
+                    warning: '[WARN]', 
+                    info: '[INFO]' 
+                };
                 const prefix = prefixes[type] || '[INFO]';
-                line.innerHTML = '<span class="console-' + type + '">' + prefix + '</span> [' + timestamp + '] ' + text;
+                line.innerHTML = '<span class="console-' + type + '">' + prefix + 
+                    '</span> [' + timestamp + '] ' + text;
                 console.appendChild(line);
                 console.scrollTop = console.scrollHeight;
+                
                 const lines = console.querySelectorAll('.console-line');
                 if (lines.length > 50) lines[0].remove();
             }
         }
+
+        // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
-            new ResearchOS();
+            window.researchOS = new ResearchOS();
         });
     </script>
 </body>
