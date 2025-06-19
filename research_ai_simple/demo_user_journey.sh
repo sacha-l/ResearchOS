@@ -37,8 +37,12 @@ print_user_action() {
     echo -e "${YELLOW}👤 USER ACTION: $1${NC}"
 }
 
+print_agent_action() {
+    echo -e "${GREEN}🤖 AGENT: $1${NC}"
+}
+
 print_system_response() {
-    echo -e "${GREEN}🤖 SYSTEM RESPONSE: $1${NC}"
+    echo -e "${GREEN}📡 SYSTEM: $1${NC}"
 }
 
 # Function to wait with countdown
@@ -159,7 +163,7 @@ start_local_replica() {
 
 # Function to compile and deploy canister
 compile_and_deploy() {
-    print_step "Compiling and Deploying ResearchOS Agent Network"
+    print_step "Compiling and Deploying ResearchOS News Network"
     
     print_info "Adding WASM target..."
     rustup target add wasm32-unknown-unknown
@@ -345,25 +349,19 @@ EOF
     print_info "To stop the UI server later, run:"
     echo -e "${YELLOW}kill $SERVER_PID${NC}"
     echo -e "or: ${YELLOW}kill \$(cat .ui_server.pid)${NC}"
-    
-    # Also update the Express app if it has an API endpoint for canister config
-    if [ -f "$EXPRESS_DIR/index.js" ] || [ -f "$EXPRESS_DIR/app.js" ] || [ -f "$EXPRESS_DIR/server.js" ]; then
-        print_info "Express server can access canister ID via process.env.CANISTER_ID"
-    fi
 }
 
 # Main demo script
-print_title "                ResearchOS Agent Network Demo                      "
+print_title "             ResearchOS News Network - User Journey Demo           "
 
-echo -e "${CYAN}This demo shows the ResearchOS multi-agent coordination system:${NC}"
-echo -e "${CYAN}0. Deploy multi-agent canister to local ICP${NC}"
-echo -e "${CYAN}1. Agent 1: Store and retrieve data${NC}"
-echo -e "${CYAN}2. Agent 2: Fetch data from external APIs${NC}"
-echo -e "${CYAN}3. Agent 3: Query Groq AI for research${NC}"
-echo -e "${CYAN}4. Demonstrate agent coordination and shared memory${NC}"
+echo -e "${CYAN}This demo shows a real user journey with ResearchOS:${NC}"
+echo -e "${CYAN}→ User searches for news about a topic${NC}"
+echo -e "${CYAN}→ Groq AI agent fetches and summarizes latest information${NC}"
+echo -e "${CYAN}→ Optional: Enable 20-minute auto-updates for the topic${NC}"
+echo -e "${CYAN}→ View history and manage tracked topics${NC}"
 echo
 
-wait_with_demo 3 "Starting agent network demo in"
+wait_with_demo 3 "Starting ResearchOS News Network demo in"
 
 # Pre-flight checks
 check_and_install_dfx
@@ -377,171 +375,177 @@ wait_with_demo 2 "Local replica ready. Now compiling and deploying..."
 # Compile and deploy
 compile_and_deploy
 
-wait_with_demo 3 "Agent network deployed! Starting coordination demo..."
+wait_with_demo 3 "News Network deployed! Starting user journey demo..."
 
-print_step "Step 1: System Health Check"
-print_user_action "User wants to verify the agent network is running"
+# === USER JOURNEY BEGINS ===
+
+print_title "                     User Journey: Finding News                    "
+
+# Health check
+print_step "System Initialization"
 execute_demo_command \
-    "Checking agent network health" \
+    "Checking news network status" \
     "dfx canister call $CANISTER_NAME health_check" \
-    "Shows how many items are stored in the shared agent memory"
+    "Verifies the canister is running and shows storage status"
 
-wait_with_demo 2 "Now demonstrating Agent 1: Storage operations..."
+wait_with_demo 2 "System ready. Let's simulate a user searching for news..."
 
-# Agent 1: Storage operations
-print_step "Step 2: Agent 1 - Data Storage Operations"
-print_user_action "Agent 1 stores research data in shared memory"
+# User searches for news WITHOUT tracking
+print_step "Journey Step 1: User Searches for Lagos News"
+print_user_action "User types 'latest news in Lagos' and clicks 'Tell me the scoop!'"
+print_agent_action "News Agent activates..."
+
 execute_demo_command \
-    "Agent 1 stores AI research data" \
-    "dfx canister call $CANISTER_NAME agent_store_data '(record {
-  key = \"ai_research_status\";
-  value = \"Currently researching: neural networks, quantum computing, and blockchain scalability\";
-  agent_id = \"storage_agent_001\"
+    "Searching for Lagos news (no tracking)" \
+    "dfx canister call $CANISTER_NAME get_news '(record {
+  topic = \"latest news in Lagos\";
+  enable_tracking = false
 })'" \
-    "Agent 1 stores key research topics in shared memory for other agents to access"
+    "The Groq AI agent queries for latest Lagos news and returns results"
+
+wait_with_demo 3 "News retrieved! Now user wants to track this topic..."
+
+# User searches again WITH tracking enabled
+print_step "Journey Step 2: User Enables Auto-Updates"
+print_user_action "User toggles 'AUTO-UPDATE EVERY 20 MIN' and searches again"
+print_agent_action "News Agent activates with tracking enabled..."
 
 execute_demo_command \
-    "Agent 1 stores another data point" \
-    "dfx canister call $CANISTER_NAME agent_store_data '(record {
-  key = \"research_priority\";
-  value = \"High priority: AI safety and alignment research\";
-  agent_id = \"storage_agent_001\"
+    "Searching for Lagos news with auto-updates enabled" \
+    "dfx canister call $CANISTER_NAME get_news '(record {
+  topic = \"latest news in Lagos\";
+  enable_tracking = true
 })'" \
-    "Agent 1 adds priority information to shared knowledge base"
+    "Same search but now the topic will be updated every 20 minutes"
 
-wait_with_demo 2 "Now testing data retrieval..."
+wait_with_demo 2 "Topic is now being tracked! Let's add another topic..."
+
+# User searches for another topic
+print_step "Journey Step 3: User Searches for AI News"
+print_user_action "User searches for 'AI breakthroughs 2024' with tracking"
+print_agent_action "News Agent processes second query..."
 
 execute_demo_command \
-    "Retrieving stored research status" \
-    "dfx canister call $CANISTER_NAME agent_get_data '(\"ai_research_status\")'" \
-    "Any agent can retrieve data stored by other agents"
-
-wait_with_demo 3 "Now demonstrating Agent 2: HTTP API queries..."
-
-# Agent 2: HTTP operations
-print_step "Step 3: Agent 2 - External API Integration"
-print_user_action "Agent 2 fetches live data from external APIs"
-execute_demo_command \
-    "Agent 2 fetches current time from world clock API" \
-    "dfx canister call $CANISTER_NAME agent_query_http '(record {
-  url = \"http://worldtimeapi.org/api/timezone/UTC\";
-  agent_id = \"http_agent_002\";
-  store_key = \"current_utc_time\"
+    "Searching for AI breakthroughs with tracking" \
+    "dfx canister call $CANISTER_NAME get_news '(record {
+  topic = \"AI breakthroughs 2024\";
+  enable_tracking = true
 })'" \
-    "Agent 2 uses ICP HTTP outcalls to fetch real-time data and store it for the network"
+    "Another topic added to the auto-update list"
 
-wait_with_demo 2 "Checking what Agent 2 fetched..."
+wait_with_demo 2 "Now tracking 2 topics. Let's see what's being monitored..."
 
-execute_demo_command \
-    "Retrieving the fetched time data" \
-    "dfx canister call $CANISTER_NAME agent_get_data '(\"current_utc_time\")'" \
-    "Shows the live UTC time data fetched by Agent 2"
-
-wait_with_demo 3 "Now the exciting part - Agent 3: Groq AI integration..."
-
-# Agent 3: Groq AI operations
-print_step "Step 4: Agent 3 - Groq AI Research Queries"
-print_user_action "Agent 3 queries Groq AI for research insights"
-execute_demo_command \
-    "Agent 3 asks Groq AI about quantum computing" \
-    "dfx canister call $CANISTER_NAME agent_query_groq '(record {
-  prompt = \"What are the latest breakthroughs in quantum computing in 2024?\";
-  agent_id = \"groq_research_agent_003\";
-  store_key = \"quantum_research_2024\"
-})'" \
-    "Agent 3 uses ICP HTTP outcalls to query Groq AI directly from the blockchain"
-
-wait_with_demo 4 "Agent 3 is querying Groq AI... this may take a moment..."
+# View tracked topics
+print_step "Journey Step 4: User Views Tracked Topics"
+print_user_action "User clicks 'View Tracked Topics' button"
+print_system_response "Displaying all monitored topics..."
 
 execute_demo_command \
-    "Retrieving Groq AI research response" \
-    "dfx canister call $CANISTER_NAME agent_get_data '(\"quantum_research_2024\")'" \
-    "Shows the AI-generated research insights about quantum computing"
+    "Viewing all tracked topics" \
+    "dfx canister call $CANISTER_NAME get_tracked_topics" \
+    "Shows all topics being monitored with update counts and timestamps"
 
-wait_with_demo 2 "Let's have Agent 3 research another topic..."
+wait_with_demo 3 "User can see both topics are being tracked..."
 
-execute_demo_command \
-    "Agent 3 asks Groq AI about blockchain scalability" \
-    "dfx canister call $CANISTER_NAME agent_query_groq '(record {
-  prompt = \"Explain the current state of blockchain scalability solutions\";
-  agent_id = \"groq_research_agent_003\";
-  store_key = \"blockchain_scalability\"
-})'" \
-    "Agent 3 expands the research knowledge base with blockchain insights"
-
-wait_with_demo 3 "Processing AI response..."
+# Simulate timer update
+print_step "Journey Step 5: Behind the Scenes - Timer Update"
+print_agent_action "Timer Agent (runs every 20 min in production)..."
+print_info "In production, this happens automatically. Let's trigger it manually:"
 
 execute_demo_command \
-    "Retrieving blockchain scalability research" \
-    "dfx canister call $CANISTER_NAME agent_get_data '(\"blockchain_scalability\")'" \
-    "Shows AI-generated insights about blockchain scalability"
+    "Manually triggering update cycle (simulating timer)" \
+    "dfx canister call $CANISTER_NAME trigger_update_cycle" \
+    "All tracked topics get fresh news from Groq AI"
 
-wait_with_demo 2 "Now let's see all the data our agent network has collected..."
+wait_with_demo 3 "All topics updated! Now let's check the history..."
 
-# View all collected data
-print_step "Step 5: Agent Network Coordination - Shared Knowledge"
-print_user_action "User wants to see all data collected by the agent network"
+# View history
+print_step "Journey Step 6: User Views News History"
+print_user_action "User wants to see historical updates for Lagos"
+print_system_response "Retrieving news history..."
+
 execute_demo_command \
-    "Viewing complete shared knowledge base" \
-    "dfx canister call $CANISTER_NAME get_all_data" \
-    "Shows all data stored by Agent 1, fetched by Agent 2, and researched by Agent 3"
+    "Getting news history for Lagos (last 3 updates)" \
+    "dfx canister call $CANISTER_NAME get_news_history '(\"latest news in Lagos\", opt 3)'" \
+    "Shows historical news updates for this topic"
 
-wait_with_demo 2 "Final system health check..."
+wait_with_demo 2 "User can see how news evolved over time..."
 
-# Final health check
-print_step "Step 6: Final Agent Network Status"
-print_user_action "User checks the final state of the agent network"
+# Get latest stored news
+print_step "Journey Step 7: Quick Check Latest News"
+print_user_action "User wants just the latest stored news without a new search"
+
 execute_demo_command \
-    "Final health check showing network growth" \
+    "Getting latest cached news for Lagos" \
+    "dfx canister call $CANISTER_NAME get_latest_stored_news '(\"latest news in Lagos\")'" \
+    "Returns the most recent stored update without calling Groq AI"
+
+wait_with_demo 2 "Perfect for quick checks without using API calls..."
+
+# Untrack a topic
+print_step "Journey Step 8: User Stops Tracking a Topic"
+print_user_action "User clicks the × button next to 'AI breakthroughs 2024'"
+
+execute_demo_command \
+    "Untracking AI breakthroughs topic" \
+    "dfx canister call $CANISTER_NAME untrack_topic '(\"AI breakthroughs 2024\")'" \
+    "Removes topic from auto-update list"
+
+# Final status check
+print_step "Journey Complete: Final System Status"
+execute_demo_command \
+    "Final system check" \
     "dfx canister call $CANISTER_NAME health_check" \
-    "Shows how the shared memory has grown through agent coordination"
+    "Shows final state with stored items and tracked topics"
 
-wait_with_demo 3 "Demo completed! Here's what our agents accomplished..."
+wait_with_demo 3 "Demo completed! Here's what happened behind the scenes..."
 
 # Summary
-print_title "                         Agent Network Summary                      "
+print_title "                    Agent Coordination Summary                     "
 
-echo -e "${GREEN}✓ ResearchOS Agent Network Demo Completed Successfully!${NC}"
+echo -e "${GREEN}✓ ResearchOS News Network User Journey Completed!${NC}"
 echo
-echo -e "${CYAN}What our agents accomplished:${NC}"
-echo -e "  ${GREEN}→${NC} Agent 1 (Storage): Stored research priorities and status data"
-echo -e "  ${GREEN}→${NC} Agent 2 (HTTP): Fetched live UTC time data from external API"
-echo -e "  ${GREEN}→${NC} Agent 3 (Groq AI): Generated research insights on quantum computing and blockchain"
-echo -e "  ${GREEN}→${NC} All agents shared data through common memory space"
+echo -e "${CYAN}What happened during the user journey:${NC}"
+echo -e "  ${GREEN}1.${NC} User searched for news → Groq AI agent fetched latest information"
+echo -e "  ${GREEN}2.${NC} User enabled tracking → Topic added to 20-minute update list"
+echo -e "  ${GREEN}3.${NC} Timer agent (background) → Automatically updates all tracked topics"
+echo -e "  ${GREEN}4.${NC} Storage agent → Maintains history of all news updates"
+echo -e "  ${GREEN}5.${NC} User can view history → See how news changes over time"
 echo
-echo -e "${CYAN}ICP Blockchain Features Demonstrated:${NC}"
-echo -e "  ${GREEN}→${NC} HTTP Outcalls: Direct API access without oracles"
-echo -e "  ${GREEN}→${NC} Persistent Storage: Data survives between function calls"
-echo -e "  ${GREEN}→${NC} Multi-Agent Coordination: Agents share knowledge seamlessly"
-echo -e "  ${GREEN}→${NC} AI Integration: Direct Groq AI queries from blockchain"
+echo -e "${CYAN}Agent Coordination Behind the Scenes:${NC}"
+echo -e "  ${PURPLE}→${NC} News Agent: Interfaces with Groq AI to fetch news"
+echo -e "  ${PURPLE}→${NC} Storage Agent: Keeps all news updates with timestamps"
+echo -e "  ${PURPLE}→${NC} Timer Agent: Runs every 20 minutes to refresh tracked topics"
+echo -e "  ${PURPLE}→${NC} Tracking Agent: Manages which topics to auto-update"
 echo
-echo -e "${CYAN}Real-World Applications:${NC}"
-echo -e "  ${GREEN}→${NC} Autonomous research networks"
-echo -e "  ${GREEN}→${NC} Multi-source data aggregation"
-echo -e "  ${GREEN}→${NC} AI-powered blockchain applications"
-echo -e "  ${GREEN}→${NC} Decentralized knowledge management"
+echo -e "${CYAN}Key Features Demonstrated:${NC}"
+echo -e "  ${YELLOW}→${NC} Instant news search with AI summarization"
+echo -e "  ${YELLOW}→${NC} Optional auto-updates every 20 minutes"
+echo -e "  ${YELLOW}→${NC} Historical news tracking"
+echo -e "  ${YELLOW}→${NC} Topic management (track/untrack)"
+echo -e "  ${YELLOW}→${NC} Cached results for quick access"
 echo
 
 # Launch UI
-wait_with_demo 3 "Launching ResearchOS Neural Interface..."
+wait_with_demo 3 "Launching ResearchOS News Network UI..."
 launch_ui
 
 echo
-echo -e "${CYAN}Next Steps:${NC}"
-echo -e "  ${YELLOW}→${NC} Deploy to mainnet: dfx deploy --network ic"
-echo -e "  ${YELLOW}→${NC} Add more specialized agents"
-echo -e "  ${YELLOW}→${NC} Implement timer-based autonomous operations"
-echo -e "  ${YELLOW}→${NC} Build frontend interface for agent coordination"
+echo -e "${CYAN}Try it yourself in the UI:${NC}"
+echo -e "  ${YELLOW}1.${NC} Search for any topic (e.g., 'crypto market', 'tech startups')"
+echo -e "  ${YELLOW}2.${NC} Toggle auto-updates to track topics"
+echo -e "  ${YELLOW}3.${NC} Click 'View Tracked Topics' to manage your list"
+echo -e "  ${YELLOW}4.${NC} Use 'News History' to see past updates"
+echo -e "  ${YELLOW}5.${NC} Force an update with 'Force Update Now'"
 echo
-echo -e "${PURPLE}Your agent network is now operational and ready for research!${NC}"
+echo -e "${PURPLE}Your ResearchOS News Network is live and ready!${NC}"
 
 print_title "                        Demo Complete                              "
 
-echo -e "${BLUE}To interact with your agents:${NC}"
-echo -e "${BLUE}Store data: ${NC}dfx canister call $CANISTER_NAME agent_store_data '(record { key = \"test\"; value = \"data\"; agent_id = \"agent1\" })'"
-echo -e "${BLUE}Fetch HTTP: ${NC}dfx canister call $CANISTER_NAME agent_query_http '(record { url = \"http://example.com\"; agent_id = \"agent2\"; store_key = \"result\" })'"
-echo -e "${BLUE}Query Groq: ${NC}dfx canister call $CANISTER_NAME agent_query_groq '(record { prompt = \"your question\"; agent_id = \"agent3\"; store_key = \"ai_result\" })'"
-echo -e "${BLUE}Get data: ${NC}dfx canister call $CANISTER_NAME agent_get_data '(\"key_name\")'"
-echo -e "${BLUE}View all: ${NC}dfx canister call $CANISTER_NAME get_all_data"
+echo -e "${BLUE}Advanced commands for power users:${NC}"
+echo -e "${BLUE}Get news: ${NC}dfx canister call $CANISTER_NAME get_news '(record { topic = \"your topic\"; enable_tracking = true })'"
+echo -e "${BLUE}View tracked: ${NC}dfx canister call $CANISTER_NAME get_tracked_topics"
+echo -e "${BLUE}Get history: ${NC}dfx canister call $CANISTER_NAME get_news_history '(\"topic\", opt 5)'"
+echo -e "${BLUE}Force update: ${NC}dfx canister call $CANISTER_NAME trigger_update_cycle"
 echo
 echo -e "${GREEN}ResearchOS UI launched with Canister ID: ${CANISTER_ID}${NC}"

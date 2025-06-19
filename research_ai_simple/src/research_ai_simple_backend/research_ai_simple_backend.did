@@ -1,3 +1,21 @@
+type NewsQuery = record {
+    topic : text;
+    enable_tracking : bool;
+};
+
+type NewsResponse = record {
+    topic : text;
+    content : text;
+    timestamp : nat64;
+    is_tracked : bool;
+};
+
+type TrackedTopic = record {
+    topic : text;
+    last_update : nat64;
+    update_count : nat32;
+};
+
 type AgentData = record {
     key : text;
     value : text;
@@ -17,14 +35,20 @@ type GroqQueryRequest = record {
 };
 
 service : {
-    // Update calls (modify state)
+    // Main news functions
+    get_news : (NewsQuery) -> (NewsResponse);
+    get_tracked_topics : () -> (vec TrackedTopic) query;
+    untrack_topic : (text) -> (bool);
+    get_latest_stored_news : (text) -> (opt NewsResponse) query;
+    get_news_history : (text, opt nat32) -> (vec NewsResponse) query;
+    trigger_update_cycle : () -> (text);
+    
+    // Legacy functions for compatibility
     agent_query_groq : (GroqQueryRequest) -> (text);
     agent_query_http : (HttpQueryRequest) -> (text);
     agent_store_data : (AgentData) -> (text);
-    clear_storage : () -> (text);
-    
-    // Query calls (read-only)
     agent_get_data : (text) -> (opt text) query;
     get_all_data : () -> (vec record { text; text }) query;
+    clear_storage : () -> (text);
     health_check : () -> (text) query;
 }
