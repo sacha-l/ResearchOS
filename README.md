@@ -1,17 +1,52 @@
 # ResearchOS
 
-A decentralized knowledge coordination system built on the Internet Computer Protocol (ICP) that demonstrates autonomous AI agents working together to maintain and update shared knowledge bases.
+Autonomous AI agents on ICP that coordinate to maintain fresh, up-to-date knowledge bases. Built to demonstrate how ICP's unique features enable decentralized research systems.
 
-## Project Overview
+## What It Does
 
-ResearchOS showcases how ICP's unique canister features enable persistent, autonomous knowledge systems. The current implementation demonstrates a news monitoring application where AI agents coordinate to keep information current without external infrastructure.
+ResearchOS runs a **news monitoring system** where AI agents work together to keep information current:
 
-### Key ICP Features Utilized
+- **Ask for news** on any topic → Get instant results from Groq AI
+- **System starts monitoring** → Topic gets auto-updated every 20 minutes  
+- **Smart caching** → Repeated requests return instantly (no API delays)
+- **Grows autonomously** → More topics = more comprehensive monitoring
 
-- **HTTP Outcalls**: Direct API calls to Groq AI service without external oracles or bridges
-- **Timers**: Autonomous background agents that update knowledge every 20 minutes
-- **Persistent Memory**: Knowledge survives canister upgrades and maintains state
-- **Single Canister Architecture**: All coordination happens on-chain with minimal complexity
+## User Flow
+
+```
+1. User: "What's the latest on AI?"
+   ↓
+2. Agent fetches fresh news from Groq
+   ↓  
+3. System caches result + starts monitoring "AI" topic
+   ↓
+4. Every 20 minutes: Background agent updates all monitored topics
+   ↓
+5. User asks again → Gets cached data instantly
+```
+
+## ICP Features Showcased
+
+- **HTTP Outcalls**: Direct API calls to Groq without oracles
+- **Timers**: Autonomous 20-minute update cycles  
+- **Persistent Storage**: Knowledge survives canister upgrades
+- **Single Canister**: All coordination happens on-chain
+
+## Quick Demo
+
+Run the complete development and user journey:
+
+```bash
+chmod +x demo_user_journey.sh
+./demo_user_journey.sh
+```
+
+**What the script does:**
+- Compiles and deploys ResearchOS locally
+- Demonstrates user requesting news on multiple topics
+- Shows smart caching and autonomous monitoring in action  
+- Reveals agent activity logs and system growth
+- **Runtime**: 5-7 minutes
 
 ## Architecture
 
@@ -19,114 +54,65 @@ ResearchOS showcases how ICP's unique canister features enable persistent, auton
 ┌─────────────────────────────────────────────────────────────┐
 │                    Single ResearchOS Canister              │
 ├─────────────────────────────────────────────────────────────┤
-│  Agent 1: User-Triggered News Fetcher                      │
-│  ├─ Responds to user queries                               │
-│  ├─ Smart caching (20-minute freshness)                    │
-│  └─ Adds topics to monitoring list                         │
-│                                                             │
-│  Agent 2: Autonomous Monitor                               │
-│  ├─ Timer-based updates every 20 minutes                   │
-│  ├─ Updates all monitored topics                           │
-│  └─ Maintains knowledge freshness                          │
-│                                                             │
-│  Storage Layer                                              │
-│  ├─ Topic news cache                                       │
-│  ├─ Agent activity logs                                    │
-│  └─ Monitored topics list                                  │
+│  Agent 1: User-Triggered (responds to requests)            │
+│  Agent 2: Autonomous Monitor (20-min updates)              │
+│  Storage: News cache + Agent logs + Topics list            │
 └─────────────────────────────────────────────────────────────┘
 ```
-
-## News Application Example
-
-The current implementation demonstrates a news monitoring system where:
-
-1. **User requests news** about a trending topic
-2. **Agent 1** fetches latest information from Groq AI
-3. **System adds topic** to autonomous monitoring list
-4. **Agent 2** automatically updates** all monitored topics every 20 minutes
-5. **Users get fresh data** without waiting for API calls
-
-This showcases the core ResearchOS concept: AI agents that coordinate to maintain shared, up-to-date knowledge.
-
-## Future Roadmap
-
-ResearchOS is designed as a foundational platform for knowledge coordination. Future developments include:
-
-- **Multi-AI Integration**: Source knowledge from OpenAI, Claude, Gemini, and other AI services
-- **Knowledge Synthesis**: Agents that cross-reference and validate information across sources
-- **Specialized Domains**: Financial analysis, research coordination, market intelligence
-- **Inter-Canister Scaling**: Horizontal scaling across multiple specialized canisters
-- **Knowledge Graphs**: Relationship mapping between different pieces of information
-
-## Demo Video
-
-[TODO: Link to demo video with code walkthrough and architecture explanation]
-
-- Code walkthrough of both AI agents
-- ICP feature integration (HTTP outcalls, timers, persistence)
-- Live deployment and testing
-- Architecture explanation and future roadmap
 
 ## Local Development
 
 ### Prerequisites
-- DFX SDK 0.15.0 or later
+- DFX SDK 0.15.0+
 - Rust (latest stable)
-- Node.js 16+ (for frontend development)
 
 ### Setup
 ```bash
-# Clone repository
-git clone https://github.com/yourusername/ResearchOS
-cd ResearchOS
-
-# Install dependencies
-npm install
-
-# Start local replica
+git clone https://github.com/yourusername/researchos
+cd researchos
 dfx start --clean
-
-# Deploy canister
 dfx deploy
 ```
 
-### Testing
+### Core API
 ```bash
-# Health check
-dfx canister call research_ai_simple_backend health_check
-
-# Request news
+# Get news (starts monitoring)
 dfx canister call research_ai_simple_backend get_latest_news '(record {
-  topic = "blockchain technology"
+  topic = "artificial intelligence"
 })'
 
-# View monitored topics
+# Check what's being monitored
 dfx canister call research_ai_simple_backend get_monitored_topics
 
-# Check recent activity
+# View agent activity
 dfx canister call research_ai_simple_backend get_recent_logs
 ```
 
-## API Reference
+## Why ResearchOS?
 
-### Core Functions
+**Current news apps** require constant manual refreshing and single-source information.
 
-#### `get_latest_news(request: NewsQuery) -> NewsResponse`
-Fetches latest news for a topic. Uses cache if data is less than 20 minutes old.
+**ResearchOS** creates an autonomous research network that:
+- Maintains freshness automatically
+- Builds knowledge over time  
+- Operates without centralized infrastructure
+- Gets smarter with each user interaction
 
-#### `get_monitored_topics() -> Vec<String>`
-Returns list of topics currently being monitored by autonomous agent.
+## Future Roadmap
 
-#### `get_all_cached_news() -> Vec<TopicNews>`
-Returns all cached news data with timestamps.
+- **Multi-AI Integration**: OpenAI, Claude, Gemini sources
+- **Knowledge Synthesis**: Cross-reference validation  
+- **Specialized Domains**: Finance, research, market intelligence
+- **Frontend Interface**: User-friendly web app
 
-#### `get_recent_logs() -> Vec<AgentLog>`
-Returns recent agent activity logs for debugging.
+## Hackathon Submission
 
-## License
+**New Features Built**: Complete autonomous agent coordination system using ICP timers, HTTP outcalls, and persistent storage.
 
-Apache 2.0 - see LICENSE file for details.
+**Canister ID**: TODO
+
+**License**: Apache 2.0
 
 ---
 
-ResearchOS represents the future of decentralized knowledge systems - where AI agents coordinate autonomously to maintain fresh, reliable information without centralized infrastructure.
+ResearchOS demonstrates the future of decentralized knowledge systems where AI agents coordinate autonomously to maintain reliable, current information.
