@@ -124,8 +124,8 @@ pub async fn agent_query_http(request: HttpQueryRequest) -> String {
                 storage.borrow_mut().insert(request.store_key.clone(), response_body.to_string());
             });
             
-            format!("Agent {} successfully fetched and stored data from {} under key: {}", 
-                    request.agent_id, request.url, request.store_key)
+            format!("Agent {} successfully fetched and stored data from {} under key: {}. Reponse_body: {}", 
+                    request.agent_id, request.url, request.store_key, response_body.to_string())
         }
         Err((r, m)) => {
             let error_msg = format!("HTTP request failed: {:?} - {}", r, m);

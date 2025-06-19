@@ -244,3 +244,7 @@ body {
 .hidden {
   display: none;
 }
+
+.neural-input {
+  color: yellow !important;
+}

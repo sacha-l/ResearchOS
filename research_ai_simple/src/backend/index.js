@@ -35,11 +35,13 @@ const setup = async () => {
     host: "http://127.0.0.1:4943",
   });
 
+  // Only for local development!
+  await agent.fetchRootKey();
+
   const actor = Actor.createActor(idlFactory, {
     agent,
     canisterId: jsonId.research_ai_simple_backend.local,
   });
-
 
   app.post("/submit", async (req, res) => {
     const { title, abstract_body } = req.body;
@@ -49,13 +51,14 @@ const setup = async () => {
 
   app.post("/submit-query", async (req, res) => {
     const query = req.body.query;
-    const result = actor.agent_query_groq({
+    const result = await actor.agent_query_groq({
       prompt: query,
       agent_id: "556",
       store_key: "hlgsbfg_dfydgufihd"
     })
 
     console.log(result);
+    res.send({"data": {"content": result}, "success": true});
   });
 
   app.get("/search", async (req, res) => {

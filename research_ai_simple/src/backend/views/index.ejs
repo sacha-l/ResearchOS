@@ -185,14 +185,15 @@
             displayResults(data) {
                 const dataStream = document.getElementById('dataStream');
                 const formatted = this.formatContent(data.content);
-                dataStream.innerHTML = '<div class="data-content">' + formatted + '</div>';
-                const sourceMatrix = document.getElementById('sourceMatrix');
-                sourceMatrix.innerHTML = data.sources.map(source => 
-                    '<div class="source-node"><div><span class="source-handle">' + source.handle + '</span><div style="font-size: 10px; color: #666;">' + source.neural_id + '</div></div><span class="source-influence">' + source.influence + '%</span></div>'
-                ).join('');
-                data.logs.forEach(log => {
-                    this.addConsoleEntry(log.agent + ': ' + log.message, log.log_type);
-                });
+                console.log(formatted);
+                dataStream.innerHTML = '<div class="data-content">' + formatted.split("Reponse_body: ")[1] + '</div>';
+                // const sourceMatrix = document.getElementById('sourceMatrix');
+                // sourceMatrix.innerHTML = data.sources.map(source => 
+                //     '<div class="source-node"><div><span class="source-handle">' + source.handle + '</span><div style="font-size: 10px; color: #666;">' + source.neural_id + '</div></div><span class="source-influence">' + source.influence + '%</span></div>'
+                // ).join('');
+                // data.logs.forEach(log => {
+                //     this.addConsoleEntry(log.agent + ': ' + log.message, log.log_type);
+                // });
             }
             formatContent(content) {
                 return content.split('\n').map((line, i) => {
