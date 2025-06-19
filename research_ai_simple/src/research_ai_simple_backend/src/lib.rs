@@ -306,49 +306,18 @@ fn sanitize_topic(topic: &str) -> String {
 
 // Legacy support functions (keeping your existing interface)
 #[update]
-pub async fn agent_query_http(request: HttpQueryRequest) -> String {
-    let request_headers = vec![
-        HttpHeader {
-            name: "User-Agent".to_string(),
-            value: "ICP-Agent/1.0".to_string(),
-        },
-    ];
-
-    let http_req = CanisterHttpRequestArgument {
-        url: request.url.clone(),
-        method: HttpMethod::GET,
-        body: None,
-        max_response_bytes: Some(1024), // Limit to 1KB for simple demo
-        transform: None, // Keep it simple for now
-        headers: request_headers,
-    };
-
-    match http_request(http_req, 10_000_000_000).await {
-        Ok((response,)) => {
-            let response_body = String::from_utf8_lossy(&response.body);
-            
-            // Store the HTTP response in shared memory
-            STORAGE.with(|storage| {
-                storage.borrow_mut().insert(request.store_key.clone(), response_body.to_string());
-            });
-            
-            format!("Agent {} successfully fetched and stored data from {} under key: {}. Reponse_body: {}", 
-                    request.agent_id, request.url, request.store_key, response_body.to_string())
-        }
-        Err((r, m)) => {
-            let error_msg = format!("HTTP request failed: {:?} - {}", r, m);
-            
-            // Store error in shared memory too
-            STORAGE.with(|storage| {
-                storage.borrow_mut().insert(request.store_key.clone(), error_msg.clone());
-            });
-            
-            format!("Agent {} failed to fetch from {}: {}", request.agent_id, request.url, error_msg)
-        }
-    }
+pub async fn agent_query_groq(request: GroqQueryRequest) -> String {
+    let result = query_groq_for_news(&request.prompt).await;
+    
+    // Store in legacy format
+    STORAGE.with(|storage| {
+        storage.borrow_mut().insert(request.store_key.clone(), result.clone());
+    });
+    
+    format!("Agent {} successfully queried news and stored under key: {}", 
+            request.agent_id, request.store_key)
 }
 
-// Agent 1: Simple storage agent - can store data to shared memory
 #[update]
 pub fn agent_store_data(data: AgentData) -> String {
     STORAGE.with(|storage| {
