@@ -270,15 +270,77 @@ execute_dfx "Verifying the updated data" \
 
 wait_with_countdown 2 "Running final verification..."
 
-# Step 9: Final State Check
-print_step "Step 9: Final State Verification"
-execute_dfx "Final shared memory state - all agent data should be visible" \
+# Step 9: Test Groq AI Agent
+print_step "Step 9: Test Groq AI Agent"
+execute_dfx "Testing Groq AI agent with a simple query" \
+    "dfx canister call research_ai_simple_backend agent_query_groq '(record {
+  prompt = \"What is artificial intelligence in one sentence?\";
+  agent_id = \"groq_agent_001\";
+  store_key = \"ai_definition\"
+})'"
+
+wait_with_countdown 3 "Waiting for AI response..."
+
+execute_dfx "Checking AI response stored in shared memory" \
+    "dfx canister call research_ai_simple_backend agent_get_data '(\"ai_definition\")'"
+
+wait_with_countdown 2 "Testing AI research capabilities..."
+
+execute_dfx "Groq agent analyzing blockchain technology" \
+    "dfx canister call research_ai_simple_backend agent_query_groq '(record {
+  prompt = \"List 3 key benefits of blockchain in bullet points\";
+  agent_id = \"research_agent_ai\";
+  store_key = \"blockchain_benefits\"
+})'"
+
+wait_with_countdown 2 "Retrieving blockchain analysis..."
+
+execute_dfx "Reading blockchain analysis from shared memory" \
+    "dfx canister call research_ai_simple_backend agent_get_data '(\"blockchain_benefits\")'"
+
+wait_with_countdown 3 "Testing HTTP agent coordination..."
+
+# Step 10: Test HTTP Agent
+print_step "Step 10: Test HTTP Agent"
+execute_dfx "HTTP agent fetching external data" \
+    "dfx canister call research_ai_simple_backend agent_query_http '(record {
+  url = \"https://api.github.com/zen\";
+  agent_id = \"http_agent_001\";
+  store_key = \"github_wisdom\"
+})'"
+
+execute_dfx "Reading HTTP agent data from shared memory" \
+    "dfx canister call research_ai_simple_backend agent_get_data '(\"github_wisdom\")'"
+
+wait_with_countdown 3 "Testing multi-agent coordination..."
+
+# Step 11: Multi-Agent Coordination Test
+print_step "Step 11: Multi-Agent Coordination Demo"
+execute_dfx "AI agent creating a research summary" \
+    "dfx canister call research_ai_simple_backend agent_query_groq '(record {
+  prompt = \"Summarize: What makes a good software development team?\";
+  agent_id = \"summary_agent\";
+  store_key = \"team_summary\"
+})'"
+
+wait_with_countdown 2 "Demonstrating agent coordination..."
+
+execute_dfx "Storage agent storing coordination timestamp" \
+    "dfx canister call research_ai_simple_backend agent_store_data '(record {
+  key = \"coordination_test\";
+  value = \"Multi-agent test completed successfully at $(date)\";
+  agent_id = \"coordination_monitor\"
+})'"
+
+# Step 12: Final State Check
+print_step "Step 12: Final Multi-Agent State"
+execute_dfx "Final shared memory state - showing all agent coordination" \
     "dfx canister call research_ai_simple_backend get_all_data '()'"
 
 wait_with_countdown 3 "Test sequence complete! Cleaning up..."
 
-# Step 10: Cleanup (Optional)
-print_step "Step 10: Cleanup"
+# Step 13: Cleanup (Optional)
+print_step "Step 13: Cleanup"
 read -p "Do you want to clear the storage? (y/N): " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]]; then
@@ -300,11 +362,15 @@ echo "║  ✓ Multiple agents can store data                            ║"
 echo "║  ✓ All agents can read shared data                           ║"
 echo "║  ✓ Data updates work correctly                               ║"
 echo "║  ✓ Agent coordination demonstrated                           ║"
+echo "║  ✓ Groq AI agent integration working                         ║"
+echo "║  ✓ HTTP agent fetching external data                         ║"
+echo "║  ✓ Multi-agent coordination verified                         ║"
 echo "╚══════════════════════════════════════════════════════════════╝"
 echo -e "${NC}"
 
 print_info "Next steps:"
-echo "  1. Add HTTP querying agents"
-echo "  2. Implement tag generation"
-echo "  3. Add search functionality"
-echo "  4. Build agent decision-making logic"
+echo "  1. ✓ Add HTTP querying agents"
+echo "  2. ✓ Implement AI integration (Groq)"
+echo "  3. → Add tag generation from AI responses"
+echo "  4. → Add search functionality across tags"
+echo "  5. → Build agent decision-making logic"
